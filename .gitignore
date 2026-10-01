@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+_dev/
+build/
+dist/
+*.spec.bak
+*.mp4
+*.MP4
+*.part.mp4
+.racesync_tmp/

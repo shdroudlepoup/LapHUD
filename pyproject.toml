@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "racesync"
+version = "0.1.0"
+description = "HUD de télémétrie (style F1) pour vidéos embarquées GoPro + RaceBox, synchronisé automatiquement"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.10"
+dependencies = [
+    "PySide6>=6.6",
+    "skia-python>=87",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+voix = ["audio-separator[gpu]>=0.30"]
+
+[project.gui-scripts]
+racesync = "racesync.app.main:main"
+
+[tool.setuptools.packages.find]
+include = ["racesync*"]
+
+[tool.setuptools.package-data]
+racesync = ["assets/*", "assets/fonts/*"]
