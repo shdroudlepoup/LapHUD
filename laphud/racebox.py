@@ -56,18 +56,37 @@ def _col(row, *names, default=None):
     return default
 
 
+def _is_header(line):
+    return "Time" in line and "Latitude" in line and "Speed" in line
+
+
+def _skip_to_header(fh, max_lines=60):
+    """Avance jusqu'à la ligne des colonnes. L'option « Include session description
+    header » de l'export ajoute quelques lignes de description avant."""
+    for _ in range(max_lines):
+        pos = fh.tell()
+        line = fh.readline()
+        if not line:
+            return False
+        if _is_header(line):
+            fh.seek(pos)
+            return True
+    return False
+
+
 def is_racebox_csv(path):
     try:
         with open(path, encoding="utf-8-sig", newline="") as fh:
-            head = fh.readline()
-        return "Time" in head and "Latitude" in head and "Speed" in head
-    except OSError:
+            return _skip_to_header(fh)
+    except (OSError, UnicodeDecodeError):
         return False
 
 
 def load(path):
     times, rows, utc_flag = [], [], True
     with open(path, encoding="utf-8-sig", newline="") as fh:
+        if not _skip_to_header(fh):
+            raise ValueError("ce n'est pas un export CSV RaceBox (colonnes introuvables)")
         for r in csv.DictReader(fh):
             try:
                 ts, utc = _parse_time(r["Time"])

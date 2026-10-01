@@ -1,5 +1,5 @@
 """
-Analyse d'un lot : on donne des fichiers ou des dossiers, RaceSync trouve les
+Analyse d'un lot : on donne des fichiers ou des dossiers, LapHUD trouve les
 vidéos GoPro et les CSV RaceBox, associe chaque vidéo à sa session et la synchronise.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from . import gopro, racebox, sync
 from .session import Session
 
 VIDEO_EXT = (".mp4",)
-SKIP_DIRS = {".racesync_tmp", "$recycle.bin", "system volume information"}
+SKIP_DIRS = {".laphud_tmp", "$recycle.bin", "system volume information"}
 
 
 @dataclass
@@ -48,7 +48,7 @@ def scan(paths):
     def add(p):
         low = p.lower()
         if low.endswith(VIDEO_EXT) and not os.path.basename(low).startswith("._"):
-            if not low.endswith((".part.mp4", "_racesync.mp4")):
+            if not low.endswith((".part.mp4", "_laphud.mp4")):
                 vids.append(os.path.abspath(p))
         elif low.endswith(".csv") and racebox.is_racebox_csv(p):
             csvs.append(os.path.abspath(p))

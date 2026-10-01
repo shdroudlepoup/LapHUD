@@ -25,7 +25,7 @@ def _app_dir():
 def find_tool(name):
     """ffmpeg / ffprobe : variable d'env, dossier de l'appli, PATH, puis installs courantes."""
     exe = name + (".exe" if sys.platform == "win32" else "")
-    env = os.environ.get("RACESYNC_" + name.upper())
+    env = os.environ.get("LAPHUD_" + name.upper())
     if env and os.path.isfile(env):
         return env
     for d in (os.path.join(_app_dir(), "ffmpeg"), os.path.join(_app_dir(), "ffmpeg", "bin"), _app_dir()):
@@ -50,7 +50,7 @@ def ffmpeg():
     p = find_tool("ffmpeg")
     if not p:
         raise RuntimeError("ffmpeg introuvable. Installe-le (https://ffmpeg.org) ou place ffmpeg.exe "
-                           "dans le dossier « ffmpeg » à côté de RaceSync.")
+                           "dans le dossier « ffmpeg » à côté de LapHUD.")
     return p
 
 

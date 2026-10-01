@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "racesync"
+name = "laphud"
 version = "0.1.0"
 description = "HUD de télémétrie (style F1) pour vidéos embarquées GoPro + RaceBox, synchronisé automatiquement"
 readme = "README.md"
@@ -19,10 +19,10 @@ dependencies = [
 voix = ["audio-separator[gpu]>=0.30"]
 
 [project.gui-scripts]
-racesync = "racesync.app.main:main"
+laphud = "laphud.app.main:main"
 
 [tool.setuptools.packages.find]
-include = ["racesync*"]
+include = ["laphud*"]
 
 [tool.setuptools.package-data]
-racesync = ["assets/*", "assets/fonts/*"]
+laphud = ["assets/*", "assets/fonts/*"]

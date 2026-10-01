@@ -1,4 +1,4 @@
-"""Fenêtre principale de RaceSync."""
+"""Fenêtre principale de LapHUD."""
 from __future__ import annotations
 
 import os
@@ -24,7 +24,7 @@ from .workers import Task, keep_awake, low_priority
 
 RESOLUTIONS = [("Originale", None), ("4K", (3840, 2160)), ("1440p", (2560, 1440)), ("1080p", (1920, 1080))]
 THEME_KEYS = ["broadcast", "glass", "minimal"]
-OUT_SUFFIX = "_RaceSync.mp4"
+OUT_SUFFIX = "_LapHUD.mp4"
 
 
 def _fmt_dur(s):
@@ -121,11 +121,11 @@ class JobCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("RaceSync")
+        self.setWindowTitle("LapHUD")
         self.resize(1360, 860)
         self.setMinimumSize(1100, 700)
         self.setAcceptDrops(True)
-        self.settings = QSettings("RaceSync", "RaceSync")
+        self.settings = QSettings("LapHUD", "LapHUD")
         self.paths = []
         self.jobs = []
         self.cards = []
@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
         self._frame_key = None
         self._pending_t = None
         self._is_busy = False
-        self.tmp = tempfile.mkdtemp(prefix="racesync_")
+        self.tmp = tempfile.mkdtemp(prefix="laphud_")
         self._build()
         self._set_empty(True)
 
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
 
         # en-tête
         head = QHBoxLayout()
-        logo = QLabel(f'<span style="color:{style.TEXT}">RACE</span><span style="color:{style.ACCENT}">SYNC</span>')
+        logo = QLabel(f'<span style="color:{style.TEXT}">LAP</span><span style="color:{style.ACCENT}">HUD</span>')
         logo.setObjectName("logo")
         tag = QLabel("Le HUD télémétrie de tes vidéos embarquées · GoPro + RaceBox")
         tag.setObjectName("tagline")
@@ -182,7 +182,7 @@ class MainWindow(QMainWindow):
         dl.addStretch(1)
         t1 = QLabel("Glisse ici tes vidéos GoPro et tes CSV RaceBox")
         t1.setStyleSheet("font-size: 18pt; font-weight: 700;")
-        t2 = QLabel("ou un dossier entier — RaceSync retrouve tout seul quelle vidéo va avec quelle session\n"
+        t2 = QLabel("ou un dossier entier — LapHUD retrouve tout seul quelle vidéo va avec quelle session\n"
                     "et les synchronise au centième grâce aux accéléromètres.")
         t2.setObjectName("dim")
         t2.setAlignment(Qt.AlignCenter)
@@ -445,7 +445,7 @@ class MainWindow(QMainWindow):
         t = Task(lambda task: project.analyze(self.paths, progress=lambda f, s: task.progressed.emit(f, s)))
         t.progressed.connect(lambda f, s: self._progress(f, f"Analyse · {s}"))
         t.succeeded.connect(self._analyzed)
-        t.failed.connect(lambda m: (self._busy(False), QMessageBox.warning(self, "RaceSync", m)))
+        t.failed.connect(lambda m: (self._busy(False), QMessageBox.warning(self, "LapHUD", m)))
         self.task = t
         t.start()
 
@@ -657,7 +657,7 @@ class MainWindow(QMainWindow):
         t = Task(job_fn)
         t.progressed.connect(self._progress)
         t.succeeded.connect(self._play)
-        t.failed.connect(lambda m: (self._busy(False), QMessageBox.warning(self, "RaceSync", m)))
+        t.failed.connect(lambda m: (self._busy(False), QMessageBox.warning(self, "LapHUD", m)))
         self.task = t
         t.start()
 
@@ -721,7 +721,7 @@ class MainWindow(QMainWindow):
         t.progressed.connect(self._progress)
         t.logged.connect(self._export_event)
         t.succeeded.connect(self._exported)
-        t.failed.connect(lambda m: (self._exported((0, len(todo))), QMessageBox.warning(self, "RaceSync", m)))
+        t.failed.connect(lambda m: (self._exported((0, len(todo))), QMessageBox.warning(self, "LapHUD", m)))
         self.task = t
         t.start()
 
@@ -748,7 +748,7 @@ class MainWindow(QMainWindow):
         self.lbl_status.setText(f"Terminé : {done}/{total} vidéo(s) exportée(s)")
         self._update_export_btn()
         if done:
-            QMessageBox.information(self, "RaceSync",
+            QMessageBox.information(self, "LapHUD",
                                     f"{done} vidéo(s) exportée(s) dans :\n{self.out_dir or 'les dossiers des vidéos'}")
 
     def _cancel(self):
@@ -773,7 +773,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e):
         if self.task and self.task.isRunning():
-            r = QMessageBox.question(self, "RaceSync", "Un export est en cours. Quitter quand même ?")
+            r = QMessageBox.question(self, "LapHUD", "Un export est en cours. Quitter quand même ?")
             if r != QMessageBox.Yes:
                 e.ignore()
                 return

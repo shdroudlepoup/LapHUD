@@ -5,10 +5,10 @@ from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
-from racesync.gopro import GoProClip
-from racesync.racebox import RaceBoxLog
-from racesync.session import Session
-from racesync import sync
+from laphud.gopro import GoProClip
+from laphud.racebox import RaceBoxLog
+from laphud.session import Session
+from laphud import sync
 
 T0 = datetime(2026, 5, 31, 12, 0, 0, tzinfo=timezone.utc)
 R, V, FS = 100.0, 20.0, 25.0          # circuit circulaire de 100 m, 20 m/s, RaceBox 25 Hz

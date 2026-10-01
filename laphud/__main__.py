@@ -1,4 +1,4 @@
-from racesync.app.main import main
+from laphud.app.main import main
 
 if __name__ == "__main__":
     main()

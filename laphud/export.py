@@ -116,7 +116,7 @@ def export(video, clip, session, offset, out, opts=None, log=print, progress=Non
     fps = opts.hud_fps
     nfr = int(dur * fps)
     offset = offset + opts.nudge
-    work = os.path.join(os.path.dirname(os.path.abspath(out)), ".racesync_tmp")
+    work = os.path.join(os.path.dirname(os.path.abspath(out)), ".laphud_tmp")
     os.makedirs(work, exist_ok=True)
     part = os.path.splitext(out)[0] + ".part.mp4"
 

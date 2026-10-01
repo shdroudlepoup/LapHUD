@@ -1,4 +1,4 @@
-"""Point d'entrée de l'application RaceSync."""
+"""Point d'entrée de l'application LapHUD."""
 from __future__ import annotations
 
 import glob
@@ -17,7 +17,7 @@ def main():
     from .window import MainWindow
 
     app = QApplication(sys.argv)
-    app.setApplicationName("RaceSync")
+    app.setApplicationName("LapHUD")
     for f in glob.glob(os.path.join(FONT_DIR, "*.ttf")):
         QFontDatabase.addApplicationFont(f)
     app.setFont(QFont("Titillium Web", 10))
@@ -29,7 +29,7 @@ def main():
     w.show()
     if len(sys.argv) > 1:
         w._add_paths(sys.argv[1:])
-    snap = os.environ.get("RACESYNC_SELFTEST")
+    snap = os.environ.get("LAPHUD_SELFTEST")
     if snap:
         _selftest(app, w, snap)
     sys.exit(app.exec())
