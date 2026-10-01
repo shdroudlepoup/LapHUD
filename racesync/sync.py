@@ -117,15 +117,22 @@ def best_match(clip, logs):
     if not logs:
         return None, None
     if clip.gps_anchor is not None:
-        def gap(L):
-            # écart entre la vidéo et l'intervalle couvert par le CSV
+        def span(L):
             d = (L.t0 - clip.gps_anchor).total_seconds()
             if not L.utc:                  # CSV en heure locale : fuseau inconnu
                 d -= round(d / 3600.0) * 3600.0
-            v0, v1 = 0.0, clip.duration
-            s0, s1 = d, d + L.duration
-            return max(0.0, max(v0, s0) - min(v1, s1))
-        cand = sorted(logs, key=gap)
+            return d, d + L.duration
+
+        def gap(L):
+            # écart entre la vidéo et l'intervalle couvert par le CSV (0 s'ils se chevauchent)
+            s0, s1 = span(L)
+            return max(0.0, max(0.0, s0) - min(clip.duration, s1))
+
+        def overlap(L):
+            s0, s1 = span(L)
+            return max(0.0, min(clip.duration, s1) - max(0.0, s0))
+        # vidéo à cheval sur deux CSV : on prend celui qui en couvre la plus grande partie
+        cand = sorted(logs, key=lambda L: (gap(L), -overlap(L)))
         if gap(cand[0]) < 600:
             return cand[0], synchronize(clip, cand[0])
     results = [(L, synchronize(clip, L)) for L in logs]
