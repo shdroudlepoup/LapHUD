@@ -61,6 +61,34 @@ class HudState:
     g_trail: list = field(default_factory=list)
 
 
+def local_xy(lat, lon):
+    """Projection locale en mètres (x vers l'est, y vers le nord)."""
+    lat0 = math.radians(float(np.median(lat)))
+    x = np.radians(lon - np.median(lon)) * math.cos(lat0) * 6371000.0
+    y = np.radians(lat - np.median(lat)) * 6371000.0
+    return x, y
+
+
+def gps_g(t, x, y, speed):
+    """G latérales et longitudinales déduites de la trajectoire GPS, sans retard.
+
+    Tous les lissages sont centrés : un freinage tombe au même instant que sur la vidéo
+    (contrairement aux G « calc » de RaceChrono, lissées en temps réel avec ~0,5 s de retard).
+    """
+    fs = (len(t) - 1) / max(t[-1] - t[0], 1e-6)
+    # trajectoire lissée d'abord : le GPS « tremble » de quelques dizaines de cm, ce qui
+    # suffit à fausser le cap (et donc les G latérales) si on le dérive directement
+    w = max(1, round(fs * 0.5))
+    xs, ys = _smooth(x, w), _smooth(y, w)
+    hdg = _smooth(np.unwrap(np.arctan2(np.gradient(xs, t), np.gradient(ys, t))), w)
+    yaw = np.gradient(hdg, t)                          # rad/s, + = vers la droite
+    moving = (speed > 5.0).astype(float)               # à l'arrêt, le cap ne veut rien dire
+    lat = _smooth(speed * yaw / G * moving, round(fs * 0.4))
+    lon = _smooth(np.gradient(_smooth(speed, w), t) / G, round(fs * 0.4))
+    # une voiture de route dépasse rarement 1,5 G : au-delà c'est du bruit GPS
+    return np.clip(lat, -1.6, 1.6), np.clip(lon, -1.6, 1.6)
+
+
 class Session:
     def __init__(self, log):
         self.log = log
@@ -69,9 +97,7 @@ class Session:
         self.fs = (n - 1) / max(self.t[-1], 1e-6)
 
         # projection locale en mètres
-        lat0 = math.radians(float(np.median(log.lat)))
-        self.x = np.radians(log.lon - np.median(log.lon)) * math.cos(lat0) * 6371000.0
-        self.y = np.radians(log.lat - np.median(log.lat)) * 6371000.0
+        self.x, self.y = local_xy(log.lat, log.lon)
         self.dist = np.concatenate([[0], np.cumsum(np.hypot(np.diff(self.x), np.diff(self.y)))])
         self.speed = _smooth(log.speed, max(1, round(self.fs * 0.12)))
 
@@ -83,18 +109,7 @@ class Session:
     # ------------------------------------------------------------------ G
     def _physics_g(self):
         """G déduites de la vitesse et de la trajectoire (référence de sens)."""
-        # trajectoire lissée d'abord : le GPS « tremble » de quelques dizaines de cm, ce qui
-        # suffit à fausser le cap (et donc les G latérales) si on le dérive directement
-        t = self.t
-        w = max(1, round(self.fs * 0.5))
-        xs, ys = _smooth(self.x, w), _smooth(self.y, w)
-        hdg = _smooth(np.unwrap(np.arctan2(np.gradient(xs, t), np.gradient(ys, t))), w)
-        yaw = np.gradient(hdg, t)                          # rad/s, + = vers la droite
-        moving = (self.speed > 5.0).astype(float)          # à l'arrêt, le cap ne veut rien dire
-        lat = _smooth(self.speed * yaw / G * moving, round(self.fs * 0.4))
-        lon = _smooth(np.gradient(_smooth(self.speed, w), t) / G, round(self.fs * 0.4))
-        # une voiture de route dépasse rarement 1,5 G : au-delà c'est du bruit GPS
-        return np.clip(lat, -1.6, 1.6), np.clip(lon, -1.6, 1.6)
+        return gps_g(self.t, self.x, self.y, self.speed)
 
     def _fix_g(self):
         lat_d, lon_d = self._physics_g()

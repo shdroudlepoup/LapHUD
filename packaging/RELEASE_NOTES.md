@@ -1,10 +1,10 @@
-## LapHUD 0.2.3
+## LapHUD 0.2.4
 
-🇫🇷 **Aperçu 10 s corrigé** : en revenant à un décalage déjà essayé au même endroit, l'aperçu échouait (« impossible de la renommer ») ou montrait l'ancien extrait. Chaque aperçu est maintenant un fichier neuf, et le décalage manuel s'y voit à tous les coups.
+🇫🇷 **Synchro RaceChrono corrigée (HUD ~0,6 s en avance)** : sans capteur d'accélération, RaceChrono fournit des G « calculées » à partir du GPS, lissées avec une demi-seconde de retard. LapHUD s'y calait, et tout le HUD arrivait un peu trop tôt (il freinait avant la voiture). Les G sont maintenant recalculées sans retard à partir de la trajectoire. Si tu as exporté des vidéos RaceChrono avec une version précédente, refais-les. Les logs RaceBox ne sont pas concernés.
 
-🇬🇧 **10 s preview fixed**: going back to a shift you had already tried at the same spot made the preview fail (“could not rename”) or show the old clip. Every preview is now a fresh file, so the manual shift always shows.
+🇬🇧 **RaceChrono sync fixed (HUD ~0.6 s early)**: without an acceleration sensor, RaceChrono writes GPS-derived “calc” G values smoothed with half a second of lag. LapHUD synced to them, so the whole HUD ran slightly early (braking before the car did). G are now recomputed from the trajectory with no lag. If you exported RaceChrono videos with an earlier version, redo them. RaceBox logs are not affected.
 
-Rappel de la 0.2.2 / Also in 0.2.2: signature « made with LAPHUD » toujours présente / always-on signature.
+Aussi dans la 0.2.3 / Also in 0.2.3: aperçu 10 s corrigé / 10 s preview fixed.
 
 ### Téléchargements / Downloads
 
