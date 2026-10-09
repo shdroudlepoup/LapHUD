@@ -1,10 +1,12 @@
-## LapHUD 0.2.4
+## LapHUD 0.2.5
 
-🇫🇷 **Synchro RaceChrono corrigée (HUD ~0,6 s en avance)** : sans capteur d'accélération, RaceChrono fournit des G « calculées » à partir du GPS, lissées avec une demi-seconde de retard. LapHUD s'y calait, et tout le HUD arrivait un peu trop tôt (il freinait avant la voiture). Les G sont maintenant recalculées sans retard à partir de la trajectoire. Si tu as exporté des vidéos RaceChrono avec une version précédente, refais-les. Les logs RaceBox ne sont pas concernés.
+🇫🇷 **Précision de la synchro en secondes** : au lieu d'un pourcentage de « confiance » difficile à lire, LapHUD synchronise séparément plusieurs morceaux de la vidéo et affiche leur accord, par exemple « précision ±0,04 s ». Une mauvaise association vidéo/CSV se repère tout de suite (pastille orange).
+🇫🇷 **Aperçu au bon endroit** : le curseur se place au début du plus gros freinage du meilleur tour, et l'aperçu 10 s commence 3 s avant pour entendre arriver le freinage.
 
-🇬🇧 **RaceChrono sync fixed (HUD ~0.6 s early)**: without an acceleration sensor, RaceChrono writes GPS-derived “calc” G values smoothed with half a second of lag. LapHUD synced to them, so the whole HUD ran slightly early (braking before the car did). G are now recomputed from the trajectory with no lag. If you exported RaceChrono videos with an earlier version, redo them. RaceBox logs are not affected.
+🇬🇧 **Sync accuracy in seconds**: instead of a hard-to-read “confidence” percentage, LapHUD syncs several pieces of the video separately and shows how well they agree, e.g. “accurate to ±0.04 s”. A wrong video/CSV pairing stands out right away (orange dot).
+🇬🇧 **Preview in the right place**: the cursor starts at the biggest braking zone of the best lap, and the 10 s preview starts 3 s earlier so you hear the braking coming.
 
-Aussi dans la 0.2.3 / Also in 0.2.3: aperçu 10 s corrigé / 10 s preview fixed.
+Aussi dans la 0.2.4 / Also in 0.2.4: synchro RaceChrono corrigée (HUD ~0,6 s en avance) / RaceChrono sync fixed (HUD ~0.6 s early).
 
 ### Téléchargements / Downloads
 

@@ -30,11 +30,16 @@ class SyncResult:
     confidence: float        # 0..1 (corrélation au pic)
     coarse: float | None     # offset d'après l'heure GPS seule
     note: list = field(default_factory=list)   # liste de Msg
+    precision: float | None = None             # s : demi-écart entre morceaux synchronisés à part
 
     @property
     def quality(self):
         if self.method != "imu":
             return "approx"
+        if self.precision is not None:
+            # la corrélation dit si les signaux se ressemblent, pas si le calage est juste :
+            # on juge sur l'accord entre morceaux de vidéo synchronisés indépendamment
+            return "excellent" if self.precision <= 0.08 else "ok" if self.precision <= 0.15 else "faible"
         return "excellent" if self.confidence >= 0.6 else "ok" if self.confidence >= 0.35 else "faible"
 
 
@@ -59,6 +64,31 @@ def _xcorr(g, r):
     lags = np.arange(-(nr - 1), ng)
     ov = np.minimum(nr, ng - lags) - np.maximum(0, -lags)
     return lags, cc[lags % m] / np.maximum(ov, 1), ov
+
+
+def _precision(tg, Gs, tr, Rs, offset, win=1.0, chunk_s=40.0, n_max=4):
+    """Synchronise séparément plusieurs morceaux de la vidéo autour de `offset` (±win) et
+    renvoie le demi-écart entre leurs résultats (s), ou None si la vidéo est trop courte."""
+    a, b = max(tg[0], tr[0] + offset + win), min(tg[-1], tr[-1] + offset - win)
+    n = min(n_max, int((b - a) // chunk_s))
+    if n < 3:
+        return None
+    cands = offset + np.arange(-win, win + 1e-9, 1.0 / FS)
+    edges = np.linspace(a, b, n + 1)
+    found = []
+    for i in range(n):
+        m = (tg >= edges[i]) & (tg < edges[i + 1])
+        tt = tg[m]
+        R = [np.interp(tt[None, :] - cands[:, None], tr, r) for r in Rs]     # (offsets, échantillons)
+        sc = sum(((R_ * g[m]).mean(axis=1)) ** 2 for g in Gs for R_ in R)
+        k = int(np.argmax(sc))
+        frac = 0.0
+        if 0 < k < len(sc) - 1:
+            den = sc[k - 1] - 2 * sc[k] + sc[k + 1]
+            if den:
+                frac = 0.5 * (sc[k - 1] - sc[k + 1]) / den
+        found.append(cands[k] + frac / FS)
+    return float(np.ptp(found)) / 2
 
 
 def synchronize(clip, log, search=8.0):
@@ -106,11 +136,12 @@ def synchronize(clip, log, search=8.0):
             frac = 0.5 * (y0 - y2) / den
     offset = float(offs[k] + frac / FS)
     conf = min(1.0, float(peak[k]))
+    prec = _precision(tg, Gs, tr, Rs, offset)
     far = ok & (np.abs(offs - offs[k]) > 1.5)
     if far.any() and sc[far].max() > 0.8 * sc[k]:
         conf *= 0.5
         note.append(Msg("note_ambiguous"))
-    return SyncResult(offset, "imu", conf, coarse, note)
+    return SyncResult(offset, "imu", conf, coarse, note, prec)
 
 
 def best_match(clip, logs):

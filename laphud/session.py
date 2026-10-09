@@ -260,6 +260,16 @@ class Session:
                 return k
         return len(self.laps) - 1
 
+    def big_braking(self):
+        """Début (temps session) du plus gros freinage du meilleur tour : un bon moment pour
+        vérifier la synchro, la vitesse chute franchement."""
+        best = min(self.timed, key=lambda L: L.duration)
+        g = self.g_lon[best.i0:best.i1]
+        k = int(np.argmin(g))
+        while k > 0 and g[k - 1] < -0.15:      # on remonte jusqu'au début du freinage
+            k -= 1
+        return float(self.t[best.i0 + k])
+
     def state_at(self, t):
         """État du HUD au temps de session t (secondes depuis le début du CSV)."""
         if t < self.t[0] or t > self.t[-1]:

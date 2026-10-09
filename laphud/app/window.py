@@ -119,6 +119,9 @@ class JobCard(QFrame):
 
 
 # ====================================================================== fenêtre
+PREVIEW_LEAD = 3.0    # l'extrait commence 3 s avant le curseur : on entend arriver le freinage
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -567,11 +570,10 @@ class MainWindow(QMainWindow):
             for L in j.session.timed:
                 self.cmb_lap.addItem(tr("lap_item", n=L.number, time=fmt_time(L.duration)), L.t_start)
         self._update_sync_label()
-        # position de départ : début du meilleur tour + 5 s (ou milieu de la vidéo)
+        # position de départ : le plus gros freinage du meilleur tour (ou milieu de la vidéo)
         t = j.clip.duration / 2 if j.clip else 0
         if j.session and j.session.timed:
-            best = min(j.session.timed, key=lambda L: L.duration)
-            t = best.t_start + 5 + j.offset
+            t = j.session.big_braking() + j.offset
         self._set_slider_time(t)
         self._load_frame()
 
@@ -679,7 +681,11 @@ class MainWindow(QMainWindow):
         q = j.sync.quality
         col = {"excellent": style.OK, "ok": style.OK, "faible": style.WARN, "approx": style.WARN}[q]
         conf = f"{j.sync.confidence * 100:.0f}"
-        txt = {"excellent": tr("sync_label_auto", c=conf), "ok": tr("sync_label_auto", c=conf),
+        auto = tr("sync_label_auto", c=conf)
+        if j.sync.precision is not None:
+            p = f"{max(j.sync.precision, 0.01):.2f}"
+            auto = tr("sync_label_prec", p=p.replace(".", ",") if i18n.get_lang() == "fr" else p)
+        txt = {"excellent": auto, "ok": auto,
                "faible": tr("sync_label_faible"), "approx": tr("sync_label_approx")}[q]
         man = f'  <span style="color:{style.TEXT}">{tr("manual", d=f"{j.nudge:+.2f}")}</span>' if j.nudge else ""
         self.sync_dot.set_color(col)
@@ -699,7 +705,7 @@ class MainWindow(QMainWindow):
         j = self.current
         if not j or not j.ready or self._is_busy:
             return
-        start = max(0.0, self._slider_time() - 1.0)
+        start = max(0.0, self._slider_time() - PREVIEW_LEAD)
         # Le lecteur garde l'extrait précédent ouvert : on le libère, on nettoie, et chaque
         # extrait a un nom unique (sinon réécrire un fichier encore ouvert échoue sous Windows).
         self._stop_player()

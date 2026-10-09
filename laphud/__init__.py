@@ -5,4 +5,4 @@ Ce programme est un logiciel libre : vous pouvez le redistribuer et/ou le modifi
 selon les termes de la GNU General Public License version 3 ou ultérieure.
 Il est distribué SANS AUCUNE GARANTIE. Voir le fichier LICENSE.
 """
-__version__ = "0.2.4"
+__version__ = "0.2.5"

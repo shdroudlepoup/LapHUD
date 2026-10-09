@@ -40,6 +40,7 @@ T = {
         "no_match": "aucune session RaceBox ou RaceChrono ne correspond",
         # ligne de synchro
         "sync_label_auto": "Synchro auto · confiance {c} %",
+        "sync_label_prec": "Synchro auto · précision ±{p} s",
         "sync_label_faible": "Synchro incertaine · vérifie avec l'aperçu",
         "sync_label_approx": "Synchro par l'heure GPS seulement · vérifie avec l'aperçu",
         "manual": "· réglage manuel {d} s",
@@ -109,6 +110,7 @@ T = {
         "sync_faible": "uncertain sync, check the preview", "sync_approx": "approximate sync (GPS time)",
         "no_match": "no matching RaceBox or RaceChrono session",
         "sync_label_auto": "Automatic sync · {c}% confidence",
+        "sync_label_prec": "Automatic sync · accurate to ±{p} s",
         "sync_label_faible": "Uncertain sync · check with the preview",
         "sync_label_approx": "GPS-time sync only · check with the preview",
         "manual": "· manual offset {d} s",
