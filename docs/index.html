@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LapHUD</title>
-<meta name="description" content="LapHUD incruste un HUD télémétrie style F1 sur tes vidéos embarquées GoPro, synchronisé automatiquement avec ton RaceBox. Gratuit et libre.">
-<meta property="og:title" content="LapHUD — le HUD de F1 pour tes onboards">
-<meta property="og:description" content="GoPro + RaceBox → vidéo avec HUD télémétrie, synchro automatique au centième. Gratuit, libre, Windows / macOS / Linux.">
+<meta name="description" content="LapHUD incruste un HUD télémétrie style F1 sur tes vidéos embarquées GoPro, synchronisé automatiquement avec ton RaceBox. F1-style telemetry HUD for GoPro onboard videos, auto-synced with RaceBox. Gratuit et libre / free and open source.">
+<meta property="og:title" content="LapHUD — F1-style HUD for your onboard videos">
+<meta property="og:description" content="GoPro + RaceBox → onboard video with a telemetry HUD, synced automatically. Free and open source, Windows / macOS / Linux.">
 <meta property="og:image" content="hud.jpg">
 <link rel="icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,14 +14,17 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Mise en page : graphismes de retransmission — panneaux biseautés à liseré rouge,
-   une colonne de 1120 px, la piste (l'image embarquée) au centre de tout. */
+   une colonne de 1120 px, la piste (l'image embarquée) au centre de tout.
+   Bilingue : chaque texte existe en .fr et .en, la langue active est sur <html data-lang>. */
 :root {
   --ink: #0b0c10;          /* fond, noir de garage */
   --panel: #14161c;        /* panneaux */
   --line: #262a34;         /* filets */
   --text: #eceef2;
+  --soft: #b8bcc6;         /* texte courant secondaire */
   --dim: #8c929e;          /* gris bleuté, même biais que l'appli */
   --red: #e42a2e;          /* rouge LapHUD */
+  --red-hi: #ff3b3f;
   --purple: #a855f7;       /* meilleur tour */
   --green: #22c55e;        /* delta plus rapide */
   --display: "Titillium Web", "Segoe UI", system-ui, sans-serif;
@@ -30,6 +33,7 @@
   --skew: -11deg;
   color-scheme: dark;
 }
+html[data-lang="fr"] .en, html[data-lang="en"] .fr { display: none !important; }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
@@ -38,7 +42,7 @@ body {
   padding-inline: 16px;
   -webkit-font-smoothing: antialiased;
 }
-img { max-width: 100%; display: block; }
+img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
 .wrap { max-width: 1120px; margin-inline: auto; }
@@ -47,13 +51,17 @@ h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-he
 .num { font-family: var(--display); font-variant-numeric: tabular-nums; }
 
 /* barre du haut */
-header { display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding-block: 20px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; }
 .logo { font: italic 900 1.6rem/1 var(--display); letter-spacing: -.01em; text-decoration: none; }
 .logo b { color: var(--red); font-weight: 900; }
-nav { display: flex; gap: 22px; font: 600 .95rem var(--display); }
+nav { display: flex; align-items: center; gap: 22px; font: 600 .95rem var(--display); }
 nav a { text-decoration: none; color: var(--dim); }
 nav a:hover { color: var(--text); }
+.lang { display: inline-flex; border: 1px solid var(--line); }
+.lang button { appearance: none; border: 0; background: transparent; color: var(--dim); cursor: pointer;
+  font: 700 .8rem/1 var(--display); letter-spacing: .1em; padding: 7px 10px; }
+.lang button[aria-pressed="true"] { background: var(--red); color: #fff; }
+.lang button:hover { color: var(--text); }
 
 /* boutons biseautés, comme les panneaux du HUD */
 .btn { position: relative; display: inline-flex; align-items: center; gap: 10px;
@@ -61,20 +69,19 @@ nav a:hover { color: var(--text); }
   text-decoration: none; color: #fff; isolation: isolate; }
 .btn::before { content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(var(--skew));
   background: var(--red); transition: background .15s; }
-.btn:hover::before { background: #ff3b3f; }
+.btn:hover::before { background: var(--red-hi); }
 .btn.ghost::before { background: transparent; border: 1px solid var(--line); }
 .btn.ghost:hover::before { border-color: var(--dim); background: var(--panel); }
 
 /* héros */
 .hero { padding-block: 40px 56px; display: grid; gap: 40px; }
 .hero h1 { font-size: clamp(2.6rem, 7vw, 5.2rem); font-weight: 900; font-style: italic; letter-spacing: -.02em; }
-.hero h1 em { font-style: italic; color: var(--red); }
+.hero h1 em { font-style: italic; color: var(--red); white-space: nowrap; }
 .hero .lead { max-width: 58ch; color: #c9ccd4; font-size: 1.15rem; margin: 18px 0 0; }
 .cta { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 28px; }
 .meta { margin-top: 14px; font-size: .9rem; color: var(--dim); }
-
-.screen { position: relative; }
-.screen img { width: 100%; height: auto; border: 1px solid var(--line); }
+.screen { position: relative; margin: 0; }
+.screen img { width: 100%; border: 1px solid var(--line); }
 .screen::after { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 3px; background: var(--red); }
 .caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; margin-top: 10px;
   font-size: .85rem; color: var(--dim); }
@@ -90,24 +97,25 @@ nav a:hover { color: var(--text); }
 .banner::before { content: ""; position: absolute; inset: 0; z-index: -1; transform: skewX(var(--skew)); background: var(--purple); }
 .banner span { font-size: .72rem; letter-spacing: .14em; }
 
-/* points forts : une grille façon tableau des temps */
+/* sections */
 section { padding-block: 56px; border-top: 1px solid var(--line); }
 section > h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; font-style: italic; margin-bottom: 28px; }
+
+/* points forts : grille façon tableau des temps */
 .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px;
   background: var(--line); border: 1px solid var(--line); }
 .feature { background: var(--ink); padding: 26px 24px; display: grid; gap: 10px; align-content: start; min-width: 0; }
 .feature .stat { font: 700 2rem/1 var(--display); font-variant-numeric: tabular-nums; }
 .feature .stat.red { color: var(--red); } .feature .stat.purple { color: var(--purple); } .feature .stat.green { color: var(--green); }
 .feature h3 { font-size: 1.2rem; font-weight: 700; }
-.feature p { margin: 0; color: #b8bcc6; font-size: .98rem; }
+.feature p { margin: 0; color: var(--soft); font-size: .98rem; }
 
 /* étapes (une vraie suite : l'ordre compte) */
 .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 28px; counter-reset: step; }
 .step { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .step::before { counter-increment: step; content: counter(step); font: italic 900 3rem/1 var(--display); color: var(--red); }
 .step h3 { font-size: 1.25rem; }
-.step p { margin: 0; color: #b8bcc6; }
-
+.step p { margin: 0; color: var(--soft); }
 .settings { margin-top: 32px; background: var(--panel); border: 1px solid var(--line); padding: 20px 22px; overflow-x: auto; }
 .settings table { border-collapse: collapse; width: 100%; min-width: 420px; }
 .settings td { padding: 8px 0; border-bottom: 1px solid var(--line); }
@@ -115,15 +123,19 @@ section > h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; font-sty
 .settings td:first-child { color: var(--dim); width: 45%; }
 .settings td:last-child { font-family: var(--mono); font-size: .92rem; }
 
-.app-shot { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
-.app-shot img { border: 1px solid var(--line); }
+/* l'application */
+.app-shot { display: grid; gap: 22px; }
+.app-shot img { width: 100%; border: 1px solid var(--line); }
+.app-notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 40px; }
+.app-notes p { margin: 0; color: var(--soft); max-width: 60ch; }
+.app-notes b { color: var(--text); }
 
 /* téléchargements */
 .dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
 .os { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--red);
   padding: 24px; display: grid; gap: 12px; align-content: start; min-width: 0; }
 .os h3 { font-size: 1.5rem; font-weight: 900; font-style: italic; }
-.os p { margin: 0; color: #b8bcc6; font-size: .95rem; }
+.os p { margin: 0; color: var(--soft); font-size: .95rem; }
 .os code { font-family: var(--mono); font-size: .85rem; background: var(--ink); border: 1px solid var(--line); padding: 2px 6px; }
 .os .btn { justify-self: start; margin-top: 6px; }
 .small { font-size: .9rem; color: var(--dim); margin-top: 22px; max-width: 75ch; }
@@ -133,12 +145,22 @@ footer { border-top: 1px solid var(--line); padding-block: 32px 48px; display: f
 footer a { color: var(--text); }
 
 @media (min-width: 900px) {
-  .hero { grid-template-columns: 1fr; }
   .hero-top { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 40px; align-items: end; }
-  .app-shot { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: center; }
 }
+@media (max-width: 520px) { nav a.gh { display: none; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
+<script>
+// langue : choix mémorisé, sinon celle du navigateur (français -> fr, tout le reste -> en)
+(function () {
+  var l = null;
+  try { l = localStorage.getItem("laphud-lang"); } catch (e) {}
+  if (location.hash === "#en" || location.hash === "#fr") l = location.hash.slice(1);
+  if (!l) l = (navigator.language || "fr").toLowerCase().indexOf("fr") === 0 ? "fr" : "en";
+  document.documentElement.setAttribute("data-lang", l);
+  document.documentElement.lang = l;
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -146,8 +168,12 @@ footer a { color: var(--text); }
 <header>
   <a class="logo" href="#">LAP<b>HUD</b></a>
   <nav>
-    <a href="#telecharger">Télécharger</a>
-    <a href="https://github.com/shdroudlepoup/LapHUD">GitHub</a>
+    <a href="#download"><span class="fr">Télécharger</span><span class="en">Download</span></a>
+    <a class="gh" href="https://github.com/shdroudlepoup/LapHUD">GitHub</a>
+    <div class="lang" role="group" aria-label="Langue / Language">
+      <button type="button" data-set="fr" aria-pressed="true">FR</button>
+      <button type="button" data-set="en" aria-pressed="false">EN</button>
+    </div>
   </nav>
 </header>
 
@@ -155,128 +181,174 @@ footer a { color: var(--text); }
 <div class="hero">
   <div class="hero-top">
     <div>
-      <p class="label">GoPro + RaceBox · gratuit et libre</p>
-      <h1>Ton onboard,<br>avec un HUD <em style="white-space:nowrap">de F1</em>.</h1>
-      <p class="lead">Glisse tes vidéos GoPro et tes sessions RaceBox dans LapHUD. Il retrouve quelle vidéo va avec quelle session,
+      <p class="label"><span class="fr">GoPro + RaceBox · gratuit et libre</span><span class="en">GoPro + RaceBox · free and open source</span></p>
+      <h1 class="fr">Ton onboard,<br>avec un HUD <em>de F1</em>.</h1>
+      <h1 class="en">Your onboard,<br>with an <em>F1 HUD</em>.</h1>
+      <p class="lead fr">Glisse tes vidéos GoPro et tes sessions RaceBox dans LapHUD. Il retrouve quelle vidéo va avec quelle session,
         les synchronise au centième et incruste vitesse, chrono, delta, meilleur tour, tracé et G. Sans filigrane, sans compte, sur ton PC.</p>
+      <p class="lead en">Drop your GoPro videos and RaceBox sessions into LapHUD. It works out which video goes with which session,
+        syncs them to a hundredth of a second and burns in speed, lap timer, delta, best lap, track map and G-forces. No watermark, no account, all on your computer.</p>
       <div class="cta">
-        <a class="btn" href="#telecharger">Télécharger</a>
-        <a class="btn ghost" href="https://github.com/shdroudlepoup/LapHUD">Voir le code</a>
+        <a class="btn" href="#download"><span class="fr">Télécharger</span><span class="en">Download</span></a>
+        <a class="btn ghost" href="https://github.com/shdroudlepoup/LapHUD"><span class="fr">Voir le code</span><span class="en">View the code</span></a>
       </div>
-      <p class="meta">Windows · macOS · Linux — licence GPL-3.0</p>
+      <p class="meta"><span class="fr">Windows · macOS · Linux — licence GPL-3.0</span><span class="en">Windows · macOS · Linux — GPL-3.0 license</span></p>
     </div>
-    <div class="timer" aria-label="Exemple : chrono du tour et bandeau du meilleur tour">
+    <div class="timer" aria-hidden="true">
       <div class="clock" id="clock">1:17.800</div>
-      <div class="banner"><span>MEILLEUR TOUR</span><b class="num">1:17.800</b></div>
+      <div class="banner"><span class="fr">MEILLEUR TOUR</span><span class="en">BEST LAP</span><b class="num">1:17.800</b></div>
     </div>
   </div>
 
-  <figure class="screen" style="margin:0">
-    <img src="hud.jpg" width="1920" height="1080" alt="Vidéo embarquée dans une Toyota GT86 au circuit de Lohéac, avec le HUD LapHUD : vitesse 73 km/h, chrono 0:46.816, delta +0.20, meilleur tour 1:20.948, tracé du circuit et cercle des G à 0.88 G.">
-    <figcaption class="caption"><span>Lohéac · GT86 · tour 9 · style Broadcast</span><span>Image réelle, export 4K</span></figcaption>
+  <figure class="screen">
+    <img src="hud.jpg" width="1920" height="1080"
+      alt="Vidéo embarquée dans une Toyota GT86 au circuit de Lohéac, avec le HUD LapHUD : vitesse, chrono du tour, delta, meilleur tour, tracé du circuit et cercle des G."
+      data-alt-en="Onboard video in a Toyota GT86 at the Lohéac circuit with the LapHUD overlay: speed, lap timer, delta, best lap, track map and G-meter.">
+    <figcaption class="caption">
+      <span class="fr">Lohéac · GT86 · tour 9 · style Broadcast</span><span class="en">Lohéac, France · GT86 · lap 9 · Broadcast style</span>
+      <span class="fr">Image réelle, export 4K</span><span class="en">Real frame, 4K export</span>
+    </figcaption>
   </figure>
 </div>
 
 <section>
-  <h2>Ce que LapHUD fait à ta place</h2>
+  <h2><span class="fr">Ce que LapHUD fait à ta place</span><span class="en">What LapHUD does for you</span></h2>
   <div class="features">
     <div class="feature">
-      <div class="stat red num">0 réglage</div>
-      <h3>Synchro automatique</h3>
-      <p>L'heure GPS de la GoPro peut être fausse d'une seconde. LapHUD compare l'accéléromètre de la caméra à celui du RaceBox : freinages et virages ont la même signature. Caméra sur le casque ou sur l'arceau, avec ou sans GPS.</p>
+      <div class="stat red num"><span class="fr">0 réglage</span><span class="en">Zero setup</span></div>
+      <h3><span class="fr">Synchro automatique</span><span class="en">Automatic sync</span></h3>
+      <p class="fr">L'heure GPS de la GoPro peut être fausse d'une seconde. LapHUD compare l'accéléromètre de la caméra à celui du RaceBox : freinages et virages ont la même signature. Caméra sur le casque ou sur l'arceau, avec ou sans GPS.</p>
+      <p class="en">The GoPro's GPS clock can be a full second off. LapHUD matches the camera's accelerometer against the RaceBox's: braking and cornering leave the same signature in both. Helmet or roll-cage mount, with or without GPS lock.</p>
     </div>
     <div class="feature">
       <div class="stat num">1:20.637</div>
-      <h3>Chronos au millième</h3>
-      <p>Le temps au tour est calculé à l'instant exact du passage de la ligne, pas arrondi à l'image près. Vérifié contre l'app RaceBox : 1:20.637 contre 1:20.62 affiché.</p>
+      <h3><span class="fr">Chronos au millième</span><span class="en">Lap times to the millisecond</span></h3>
+      <p class="fr">Le temps au tour est calculé à l'instant exact du passage de la ligne, pas arrondi à l'image près. Vérifié contre l'app RaceBox : 1:20.637 contre 1:20.62 affiché.</p>
+      <p class="en">Each lap is timed at the exact moment you cross the line, not rounded to the nearest video frame. Checked against the RaceBox app: 1:20.637 vs 1:20.62 displayed.</p>
     </div>
     <div class="feature">
-      <div class="stat purple num">MEILLEUR</div>
-      <h3>Pas de spoiler</h3>
-      <p>Le meilleur tour et le delta n'affichent que ce qui s'est déjà passé. Le delta compare ta position sur la trajectoire de ton meilleur tour, pas juste la distance.</p>
+      <div class="stat purple num"><span class="fr">MEILLEUR</span><span class="en">BEST</span></div>
+      <h3><span class="fr">Pas de spoiler</span><span class="en">No spoilers</span></h3>
+      <p class="fr">Le meilleur tour et le delta n'affichent que ce qui s'est déjà passé. Le delta compare ta position sur la trajectoire de ton meilleur tour, pas juste la distance.</p>
+      <p class="en">Best lap and delta only show what has already happened. The delta compares your position along your best lap's racing line, not just distance travelled.</p>
     </div>
     <div class="feature">
       <div class="stat green num">4K</div>
-      <h3>Net et fluide</h3>
-      <p>HUD dessiné à la résolution de la vidéo, 30 ou 60 images/s. Encodage accéléré NVIDIA, AMD, Intel ou Apple. Option pour retirer les voix et garder le moteur.</p>
+      <h3><span class="fr">Net et fluide</span><span class="en">Sharp and smooth</span></h3>
+      <p class="fr">HUD dessiné à la résolution de la vidéo, 30 ou 60 images/s. Encodage accéléré NVIDIA, AMD, Intel ou Apple. Option pour retirer les voix et garder le moteur.</p>
+      <p class="en">The HUD is drawn at the video's own resolution, at 30 or 60 fps. Hardware encoding on NVIDIA, AMD, Intel or Apple. Optional voice removal that keeps the engine sound.</p>
     </div>
   </div>
 </section>
 
 <section>
-  <h2>En trois étapes</h2>
+  <h2><span class="fr">En trois étapes</span><span class="en">Three steps</span></h2>
   <div class="steps">
     <div class="step">
-      <h3>Exporte ta session RaceBox</h3>
-      <p>Depuis l'app ou le site RaceBox, télécharge la session en CSV avec les réglages ci-dessous.</p>
+      <h3><span class="fr">Exporte ta session RaceBox</span><span class="en">Export your RaceBox session</span></h3>
+      <p class="fr">Depuis l'app ou le site RaceBox, télécharge la session en CSV avec les réglages ci-dessous.</p>
+      <p class="en">From the RaceBox app or website, download the session as a CSV with the settings below.</p>
     </div>
     <div class="step">
-      <h3>Glisse tout dans LapHUD</h3>
-      <p>Vidéos et CSV en vrac, ou un dossier entier. Chaque vidéo trouve sa session ; la pastille verte confirme la synchro.</p>
+      <h3><span class="fr">Glisse tout dans LapHUD</span><span class="en">Drop everything into LapHUD</span></h3>
+      <p class="fr">Vidéos et CSV en vrac, ou un dossier entier. Chaque vidéo trouve sa session ; la pastille verte confirme la synchro.</p>
+      <p class="en">Videos and CSVs in any order, or a whole folder. Each video finds its session; a green dot confirms the sync.</p>
     </div>
     <div class="step">
-      <h3>Vérifie et exporte</h3>
-      <p>Aperçu sur ta vidéo, réglage fin si tu veux chipoter, puis export de toute la file. La vidéo sort à côté de l'originale.</p>
+      <h3><span class="fr">Vérifie et exporte</span><span class="en">Check and export</span></h3>
+      <p class="fr">Aperçu sur ta vidéo, réglage fin si tu veux chipoter, puis export de toute la file. La vidéo sort à côté de l'originale.</p>
+      <p class="en">Preview on your footage, fine-tune if you want to, then export the whole queue. Each video is saved next to the original.</p>
     </div>
   </div>
   <div class="settings">
-    <p class="label" style="margin:0 0 10px">Export RaceBox</p>
+    <p class="label" style="margin:0 0 10px"><span class="fr">Export RaceBox</span><span class="en">RaceBox export</span></p>
     <table>
       <tr><td>Format</td><td>CSV · Custom</td></tr>
       <tr><td>Time column format</td><td>Full Date/Time in UTC</td></tr>
       <tr><td>Speed column format</td><td>Kilometers/Hour</td></tr>
-      <tr><td>Include session description header</td><td>non</td></tr>
-      <tr><td>Bike Mode</td><td>non</td></tr>
+      <tr><td>Include session description header</td><td><span class="fr">non</span><span class="en">off</span></td></tr>
+      <tr><td>Bike Mode</td><td><span class="fr">non</span><span class="en">off</span></td></tr>
     </table>
   </div>
 </section>
 
 <section>
-  <h2>L'application</h2>
+  <h2><span class="fr">L'application</span><span class="en">The app</span></h2>
   <div class="app-shot">
-    <img src="app.png" width="1500" height="900" alt="Fenêtre de LapHUD : liste des sessions à gauche, aperçu de la vidéo avec le HUD au centre, réglages de style, résolution et son en bas.">
-    <div class="steps" style="grid-template-columns:1fr;counter-reset:none">
-      <p style="margin:0;color:#b8bcc6">Trois styles de HUD : <b style="color:var(--text)">Broadcast</b> façon télé F1, <b style="color:var(--text)">Carbone</b> plus discret, <b style="color:var(--text)">Épuré</b> sans panneaux.</p>
-      <p style="margin:0;color:#b8bcc6">Un export interrompu ne laisse jamais de fichier à moitié écrit, et le PC ne se met pas en veille pendant le travail. Priorité basse : tu peux jouer pendant que ça tourne.</p>
+    <img src="app.png" width="1500" height="900"
+      alt="Fenêtre de LapHUD : liste des sessions à gauche, aperçu de la vidéo avec le HUD au centre, réglages de style, résolution et son en bas."
+      data-alt-en="The LapHUD window: session list on the left, video preview with the HUD in the middle, style, resolution and sound settings at the bottom.">
+    <div class="app-notes">
+      <p class="fr">Trois styles de HUD : <b>Broadcast</b> façon télé F1, <b>Carbone</b> plus discret, <b>Épuré</b> sans panneaux. L'aperçu montre le HUD sur ta vidéo avant l'export.</p>
+      <p class="en">Three HUD styles: <b>Broadcast</b>, like F1 on TV, the more discreet <b>Carbon</b>, and <b>Clean</b> with no panels. The preview shows the HUD on your footage before you export.</p>
+      <p class="fr">Un export interrompu ne laisse jamais de fichier à moitié écrit, et le PC ne se met pas en veille pendant le travail. Priorité basse : tu peux jouer pendant que ça tourne.</p>
+      <p class="en">An interrupted export never leaves a half-written file, and the computer won't go to sleep mid-job. It runs at low priority, so you can keep gaming while it works.</p>
     </div>
   </div>
 </section>
 
-<section id="telecharger">
-  <h2>Télécharger</h2>
+<section id="download">
+  <h2><span class="fr">Télécharger</span><span class="en">Download</span></h2>
   <div class="dl">
     <div class="os">
       <h3>Windows</h3>
-      <p>Windows 10 et 11. Tout est inclus, ffmpeg compris : décompresse et lance <code>LapHUD.exe</code>.</p>
+      <p class="fr">Windows 10 et 11. Tout est inclus, ffmpeg compris : décompresse et lance <code>LapHUD.exe</code>.</p>
+      <p class="en">Windows 10 and 11. Everything is included, ffmpeg too: unzip and run <code>LapHUD.exe</code>.</p>
       <a class="btn" href="https://github.com/shdroudlepoup/LapHUD/releases/latest/download/LapHUD-windows.zip">Windows · zip</a>
     </div>
     <div class="os">
       <h3>macOS</h3>
-      <p>Mac à puce Apple. Installe ffmpeg avec <code>brew install ffmpeg</code>. Premier lancement : clic droit sur l'app → Ouvrir.</p>
+      <p class="fr">Mac à puce Apple. Installe ffmpeg avec <code>brew install ffmpeg</code>. Premier lancement : clic droit sur l'app → Ouvrir.</p>
+      <p class="en">Apple Silicon Macs. Install ffmpeg with <code>brew install ffmpeg</code>. First launch: right-click the app → Open.</p>
       <a class="btn" href="https://github.com/shdroudlepoup/LapHUD/releases/latest/download/LapHUD-macos.zip">macOS · zip</a>
     </div>
     <div class="os">
       <h3>Linux</h3>
-      <p>x86-64. Installe ffmpeg avec <code>sudo apt install ffmpeg</code>, décompresse et lance <code>LapHUD/LapHUD</code>.</p>
+      <p class="fr">x86-64. Installe ffmpeg avec <code>sudo apt install ffmpeg</code>, décompresse et lance <code>LapHUD/LapHUD</code>.</p>
+      <p class="en">x86-64. Install ffmpeg with <code>sudo apt install ffmpeg</code>, extract and run <code>LapHUD/LapHUD</code>.</p>
       <a class="btn" href="https://github.com/shdroudlepoup/LapHUD/releases/latest/download/LapHUD-linux.tar.gz">Linux · tar.gz</a>
     </div>
   </div>
-  <p class="small">L'application n'est pas signée (une signature coûte de l'argent, LapHUD est gratuit) : Windows et macOS afficheront un avertissement au premier lancement.
+  <p class="small fr">L'application n'est pas signée (une signature coûte de l'argent, LapHUD est gratuit) : Windows et macOS afficheront un avertissement au premier lancement.
     Caméras : GoPro HERO5 et plus récentes. Données : RaceBox Mini, Mini S et Micro.
-    Toutes les versions et leurs notes sont sur la <a href="https://github.com/shdroudlepoup/LapHUD/releases">page des releases</a>.</p>
+    Toutes les versions sont sur la <a href="https://github.com/shdroudlepoup/LapHUD/releases">page des releases</a>.</p>
+  <p class="small en">The app isn't code-signed (signing costs money and LapHUD is free), so Windows and macOS will show a warning on first launch.
+    Cameras: GoPro HERO5 and newer. Data: RaceBox Mini, Mini S and Micro.
+    Every version is on the <a href="https://github.com/shdroudlepoup/LapHUD/releases">releases page</a>.</p>
 </section>
 </main>
 
 <footer>
-  <span>LapHUD · Copyright © 2026 shdroudlepoup · logiciel libre sous licence <a href="https://github.com/shdroudlepoup/LapHUD/blob/main/LICENSE">GPL-3.0</a></span>
-  <span>Non affilié à GoPro ni à RaceBox · <a href="https://github.com/shdroudlepoup/LapHUD/issues">Signaler un problème</a></span>
+  <span>LapHUD · Copyright © 2026 shdroudlepoup ·
+    <span class="fr">logiciel libre sous licence</span><span class="en">free software under the</span>
+    <a href="https://github.com/shdroudlepoup/LapHUD/blob/main/LICENSE">GPL-3.0</a></span>
+  <span><span class="fr">Non affilié à GoPro ni à RaceBox</span><span class="en">Not affiliated with GoPro or RaceBox</span> ·
+    <a href="https://github.com/shdroudlepoup/LapHUD/issues"><span class="fr">Signaler un problème</span><span class="en">Report a problem</span></a></span>
 </footer>
 
 </div>
 <script>
-// Chrono de démonstration : il tourne jusqu'à 1:17.800 puis le bandeau violet s'allume.
-// État au repos = résultat final (lisible sans animation).
 (function () {
+  var root = document.documentElement;
+  // textes alternatifs des images dans la langue active
+  var imgs = document.querySelectorAll("img[data-alt-en]");
+  for (var i = 0; i < imgs.length; i++) imgs[i].setAttribute("data-alt-fr", imgs[i].alt);
+  function apply(l) {
+    root.setAttribute("data-lang", l); root.lang = l;
+    var b = document.querySelectorAll(".lang button");
+    for (var i = 0; i < b.length; i++) b[i].setAttribute("aria-pressed", String(b[i].getAttribute("data-set") === l));
+    for (var j = 0; j < imgs.length; j++) imgs[j].alt = imgs[j].getAttribute("data-alt-" + l);
+  }
+  apply(root.getAttribute("data-lang") || "fr");
+  document.querySelector(".lang").addEventListener("click", function (e) {
+    var l = e.target.getAttribute && e.target.getAttribute("data-set");
+    if (!l) return;
+    apply(l);
+    try { localStorage.setItem("laphud-lang", l); } catch (err) {}
+  });
+
+  // chrono de démonstration : il tourne jusqu'à 1:17.800 puis le bandeau violet s'allume.
+  // état au repos = résultat final (lisible sans animation)
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   var el = document.getElementById("clock"), banner = document.querySelector(".banner");
   var target = 77.8, start = null, dur = 3200;
