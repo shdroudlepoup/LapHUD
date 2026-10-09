@@ -69,14 +69,26 @@ dossier de ton choix. Les vidéos déjà exportées sont reconnues et sautées.
 
 Télécharge la dernière version dans les [Releases](https://github.com/shdroudlepoup/LapHUD/releases) :
 
-- **Windows** : `LapHUD-…-windows.zip` → décompresse, lance `LapHUD.exe`. Tout est inclus (ffmpeg compris).
-  Au premier lancement, Windows peut afficher « Windows a protégé votre ordinateur » : *Informations
-  complémentaires* → *Exécuter quand même* (l'appli n'est pas signée, elle est gratuite).
-- **macOS** (Apple Silicon) : `LapHUD-…-macos.zip` → glisse `LapHUD.app` dans Applications.
+- **Windows** : `LapHUD-windows.zip` → décompresse, lance `LapHUD.exe`. Tout est inclus (ffmpeg compris).
+- **macOS** (Apple Silicon) : `LapHUD-macos.zip` → glisse `LapHUD.app` dans Applications.
   Il faut ffmpeg : `brew install ffmpeg`. Au premier lancement : clic droit sur l'app → *Ouvrir*
   (l'appli n'est pas signée par Apple).
-- **Linux** : `LapHUD-…-linux.tar.gz` → décompresse, lance `LapHUD/LapHUD`.
+- **Linux** : `LapHUD-linux.tar.gz` → décompresse, lance `LapHUD/LapHUD`.
   Il faut ffmpeg : `sudo apt install ffmpeg` (ou l'équivalent de ta distribution).
+
+### Windows affiche un avertissement ?
+
+C'est normal : LapHUD n'est pas **signé numériquement** (une signature coûte plusieurs centaines
+d'euros par an, LapHUD est gratuit). Windows se méfie alors de tout programme téléchargé dont il
+ne connaît pas l'éditeur — ça ne veut pas dire qu'il y a un problème. Le code est entièrement
+public ici, et l'exe est construit automatiquement par GitHub à partir de ce code.
+
+- **Fenêtre « Avertissement de sécurité »** (bouclier jaune, « Éditeur inconnu ») : clique sur
+  *Exécuter*. Décoche *Toujours demander avant d'ouvrir ce fichier* pour ne plus la revoir.
+- **Écran bleu « Windows a protégé votre ordinateur »** : *Informations complémentaires* →
+  *Exécuter quand même*.
+- **Pour ne rien voir du tout** : avant de décompresser, clic droit sur le zip → *Propriétés* →
+  coche *Débloquer* en bas → *OK*, puis décompresse.
 
 ### Depuis les sources (tous systèmes)
 
@@ -142,3 +154,12 @@ track map, G-meter) onto GoPro onboard videos using RaceBox CSV data. It pairs e
 its session and syncs them to a few hundredths of a second by cross-correlating the GoPro's
 accelerometer with the RaceBox's — no manual offset, even without GPS time in the video.
 Free software under GPL-3.0-or-later. Run from source with `python -m laphud`.
+
+**Download:** grab `LapHUD-windows.zip`, `LapHUD-macos.zip` or `LapHUD-linux.tar.gz` from the
+[Releases](https://github.com/shdroudlepoup/LapHUD/releases). The app is in English and French.
+
+**Windows warning?** LapHUD isn't code-signed (signing costs hundreds a year and LapHUD is free),
+so Windows is wary of it. On the yellow *Security Warning* dialog, click *Run*; on the blue
+*Windows protected your PC* screen, click *More info* → *Run anyway*. To avoid both, right-click
+the zip before extracting → *Properties* → tick *Unblock* → *OK*. On macOS, right-click the app →
+*Open* the first time.

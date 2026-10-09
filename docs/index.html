@@ -138,6 +138,8 @@ section > h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; font-sty
 .os p { margin: 0; color: var(--soft); font-size: .95rem; }
 .os code { font-family: var(--mono); font-size: .85rem; background: var(--ink); border: 1px solid var(--line); padding: 2px 6px; }
 .os .btn { justify-self: start; margin-top: 6px; }
+.os .warn { font-size: .85rem; color: var(--dim); border-left: 3px solid #e5b400; padding-left: 10px; }
+.os .warn b { color: var(--soft); }
 .small { font-size: .9rem; color: var(--dim); margin-top: 22px; max-width: 75ch; }
 
 footer { border-top: 1px solid var(--line); padding-block: 32px 48px; display: flex; flex-wrap: wrap;
@@ -295,6 +297,8 @@ footer a { color: var(--text); }
       <p class="fr">Windows 10 et 11. Tout est inclus, ffmpeg compris : décompresse et lance <code>LapHUD.exe</code>.</p>
       <p class="en">Windows 10 and 11. Everything is included, ffmpeg too: unzip and run <code>LapHUD.exe</code>.</p>
       <a class="btn" href="https://github.com/shdroudlepoup/LapHUD/releases/latest/download/LapHUD-windows.zip">Windows · zip</a>
+      <p class="warn fr"><b>Avertissement de Windows ?</b> C'est normal, l'appli n'est pas signée. Fenêtre jaune : <i>Exécuter</i>. Écran bleu : <i>Informations complémentaires</i> → <i>Exécuter quand même</i>. Pour l'éviter : clic droit sur le zip → <i>Propriétés</i> → <i>Débloquer</i>, avant de décompresser.</p>
+      <p class="warn en"><b>Windows warning?</b> That's expected, the app isn't code-signed. Yellow dialog: <i>Run</i>. Blue screen: <i>More info</i> → <i>Run anyway</i>. To avoid it: right-click the zip → <i>Properties</i> → <i>Unblock</i>, before extracting.</p>
     </div>
     <div class="os">
       <h3>macOS</h3>
