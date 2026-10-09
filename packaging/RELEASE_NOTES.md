@@ -1,20 +1,10 @@
-## LapHUD 0.2.0
+## LapHUD 0.2.1
 
-🇫🇷 **Nouveautés**
+🇫🇷 **Signature plus lisible** : la mention « made with LAPHUD » (option *Signature*) est plus grande et posée sur un petit panneau sombre, lisible sur n'importe quel fond.
 
-- **Compatible RaceChrono** : glisse les exports **CSV v3** de RaceChrono à côté de tes vidéos GoPro, exactement comme les CSV RaceBox. Les tours officiels de RaceChrono sont repris au millième.
-- **Signature en option** : une petite mention « made with LAPHUD » en bas de la vidéo (case *Signature*, décochée par défaut).
-- **GoPro sans satellites** : certaines GoPro écrivent une fausse heure GPS (mars 2021) tant qu'elles n'ont pas capté les satellites. LapHUD l'écarte et retrouve la bonne session grâce aux accéléromètres.
-- Les vidéos qui ne sont pas des GoPro (ex. vidéos exportées par RaceChrono) sont ignorées sans message d'erreur.
-- Fin d'export plus robuste : si un antivirus ou OneDrive bloque le fichier un instant, LapHUD patiente au lieu d'échouer, et ne supprime jamais une vidéo terminée.
+🇬🇧 **More legible signature**: the “made with LAPHUD” mark (*Signature* option) is larger and sits on a small dark panel, readable on any background.
 
-🇬🇧 **What's new**
-
-- **RaceChrono support**: drop RaceChrono **CSV v3** exports next to your GoPro videos, just like RaceBox CSV files. RaceChrono's official lap times are kept to the millisecond.
-- **Optional signature**: a small “made with LAPHUD” mark at the bottom of the video (*Signature* checkbox, off by default).
-- **GoPros without satellite lock**: some GoPros write a fake GPS time (March 2021) until they find satellites. LapHUD now ignores it and finds the right session from the accelerometers.
-- Videos that aren't GoPro recordings (e.g. RaceChrono's own exported videos) are skipped quietly.
-- Sturdier export finish: if an antivirus or OneDrive briefly locks the file, LapHUD waits instead of failing, and never deletes a finished video.
+Rappel de la 0.2.0 / Also in 0.2.0: compatible RaceChrono (CSV v3), signature en option, gestion des GoPro sans satellites, fin d'export plus robuste.
 
 ### Téléchargements / Downloads
 

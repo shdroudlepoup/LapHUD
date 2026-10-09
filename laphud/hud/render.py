@@ -95,7 +95,7 @@ class HudRenderer:
             Panel("times", W - u(M) - u(330), u(M), u(330), u(118), pad),
             Panel("map", u(M), H - u(M) - u(224), u(224), u(224), pad),
             Panel("g", W - u(M) - u(224), H - u(M) - u(254), u(224), u(254), pad),
-        ] + ([Panel("brand", (W - u(240)) // 2, H - u(M) - u(28), u(240), u(28), pad)]
+        ] + ([Panel("brand", (W - u(330)) // 2, H - u(M) - u(46), u(330), u(46), pad)]
              if self.signature else [])
 
     # ------------------------------------------------------------------ texte
@@ -404,18 +404,26 @@ class HudRenderer:
     def _draw_brand(self, c, p):
         """« made with LAPHUD » : discret, lisible sur n'importe quel fond."""
         s = self.s
-        f_small = self.font("font_label", 14)
+        f_small = self.font("font_label", 19)
         tf = skia.Typeface.MakeFromFile(self.th.font("font_num_heavy"))
-        f_logo = skia.Font(tf, 21 * s)
+        f_logo = skia.Font(tf, 33 * s)
         f_logo.setSkewX(-0.2)
         f_logo.setEdging(skia.Font.Edging.kAntiAlias)
         pre = "made with  "
-        w_pre = self.text_width(pre, f_small, False, 0.6)
+        w_pre = self.text_width(pre, f_small, False, 0.8)
         w_lap, w_hud = f_logo.measureText("LAP"), f_logo.measureText("HUD")
-        x = (p.w - (w_pre + w_lap + w_hud)) / 2
-        y = p.h - 7 * s
+        # petit panneau sombre biseauté (même famille que le HUD) : lisible sur ciel ou bitume
+        tw = w_pre + w_lap + w_hud
+        bw, bh = tw + 44 * s, p.h
+        bx = (p.w - bw) / 2
+        k = bh * 0.25
+        path = skia.Path()
+        path.moveTo(bx + k, 0); path.lineTo(bx + bw, 0); path.lineTo(bx + bw - k, bh); path.lineTo(bx, bh); path.close()
+        c.drawPath(path, skia.Paint(AntiAlias=True, Color=skia.Color(8, 9, 12, 150)))
+        x = (p.w - tw) / 2
+        y = p.h / 2 + 11 * s
         shadow = skia.ImageFilters.DropShadow(0, 1.5 * s, 3 * s, 3 * s, skia.Color(0, 0, 0, 200))
-        self.text(c, pre, x, y - 1 * s, f_small, skia.Color(236, 238, 242, 200), tab=False, spacing=0.6, shadow=True)
+        self.text(c, pre, x, y - 2 * s, f_small, skia.Color(236, 238, 242, 225), tab=False, spacing=0.8, shadow=True)
         x += w_pre
         for txt, col, w in (("LAP", _c(self.th.text, 235), w_lap), ("HUD", _c(self.th.accent, 245), w_hud)):
             c.drawString(txt, x, y, f_logo, skia.Paint(AntiAlias=True, Color=col, ImageFilter=shadow))
