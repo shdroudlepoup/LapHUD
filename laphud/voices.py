@@ -21,7 +21,8 @@ def _cli():
     p = shutil.which("audio-separator")
     if p:
         return p
-    cand = os.path.join(os.path.dirname(sys.executable), "Scripts", "audio-separator.exe")
+    sub, exe = ("Scripts", "audio-separator.exe") if sys.platform == "win32" else ("bin", "audio-separator")
+    cand = os.path.join(os.path.dirname(sys.executable), sub, exe)
     if os.path.isfile(cand):
         return cand
     for pat in (os.path.expandvars(r"%LOCALAPPDATA%\Programs\Python\Python3*\Scripts\audio-separator.exe"),):

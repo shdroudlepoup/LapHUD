@@ -4,11 +4,19 @@ on: [push, pull_request]
 
 jobs:
   tests:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libgl1 libegl1 libfontconfig1
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests -t . -v
+      # le HUD doit se dessiner pareil sur les trois systèmes
+      - run: python -c "from laphud.hud.render import HudRenderer; import numpy as np; from laphud.session import HudState; r = HudRenderer(None, 1920, 1080); r.render_frame(HudState(active=True, speed_kmh=123, lap_kind='timed', lap_number=3, lap_elapsed=42.1)); print('HUD ok')"

@@ -12,7 +12,8 @@ Export du CSV dans l'app RaceBox : format CSV, préréglage « Custom »,
 « Full Date/Time in UTC », km/h, Bike Mode décoché.
 
 Compatible : GoPro HERO5 et plus récentes, RaceBox Mini / Mini S / Micro.
-Encodage accéléré sur carte NVIDIA, AMD ou Intel (sinon par le processeur).
+Encodage accéléré sur carte NVIDIA, AMD, Intel ou Apple (sinon par le processeur).
+Mac / Linux : installe ffmpeg (brew install ffmpeg / sudo apt install ffmpeg).
 
 Option « Retirer les voix » : nécessite Python et  pip install "audio-separator[gpu]"
 (carte NVIDIA conseillée). Sans cela, l'option est simplement grisée.

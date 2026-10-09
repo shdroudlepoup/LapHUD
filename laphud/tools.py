@@ -35,6 +35,12 @@ def find_tool(name):
     p = shutil.which(name)
     if p:
         return p
+    if sys.platform != "win32":
+        # une appli lancée depuis le Finder / le bureau n'hérite pas toujours du PATH du terminal
+        for d in ("/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/snap/bin"):
+            p = os.path.join(d, exe)
+            if os.path.isfile(p):
+                return p
     if sys.platform == "win32":
         pats = [os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\WinGet\Packages\*FFmpeg*\*\bin\\" + exe),
                 r"C:\ffmpeg\bin\\" + exe,
@@ -59,6 +65,9 @@ ENCODERS = [
     ("hevc_nvenc", "NVIDIA", ["-preset", "p5", "-tune", "hq", "-rc", "vbr", "-cq", "21", "-b:v", "0"]),
     ("hevc_amf", "AMD", ["-quality", "quality", "-rc", "cqp", "-qp_i", "20", "-qp_p", "22"]),
     ("hevc_qsv", "Intel", ["-preset", "slow", "-global_quality", "22"]),
+    # Mac : qualité constante sur Apple Silicon, débit fixe sur les Mac Intel
+    ("hevc_videotoolbox", "Apple", ["-q:v", "62", "-allow_sw", "0"]),
+    ("hevc_videotoolbox", "Apple", ["-b:v", "45M"]),
     ("libx265", "processeur", ["-preset", "medium", "-crf", "21"]),
 ]
 
@@ -82,6 +91,8 @@ def decoder_args(encoder):
     """Décodage matériel de la source quand c'est sans risque."""
     if encoder == "hevc_nvenc":
         return ["-hwaccel", "nvdec"]
+    if encoder == "hevc_videotoolbox":
+        return ["-hwaccel", "videotoolbox"]
     if encoder in ("hevc_amf", "hevc_qsv"):
         return ["-hwaccel", "auto"]
     return []
