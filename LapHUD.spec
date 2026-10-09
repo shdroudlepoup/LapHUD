@@ -33,5 +33,5 @@ if sys.platform == "darwin":
         name="LapHUD.app",
         icon=ICON,
         bundle_identifier="io.github.shdroudlepoup.laphud",
-        info_plist={"NSHighResolutionCapable": True, "CFBundleShortVersionString": "0.2.1"},
+        info_plist={"NSHighResolutionCapable": True, "CFBundleShortVersionString": "0.2.2"},
     )

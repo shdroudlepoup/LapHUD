@@ -1,10 +1,10 @@
-## LapHUD 0.2.1
+## LapHUD 0.2.2
 
-🇫🇷 **Signature plus lisible** : la mention « made with LAPHUD » (option *Signature*) est plus grande et posée sur un petit panneau sombre, lisible sur n'importe quel fond.
+🇫🇷 **Signature toujours présente** : chaque vidéo exportée porte la petite mention « made with LAPHUD » en bas, sur son panneau sombre. La case à cocher disparaît.
 
-🇬🇧 **More legible signature**: the “made with LAPHUD” mark (*Signature* option) is larger and sits on a small dark panel, readable on any background.
+🇬🇧 **Signature always on**: every exported video carries the small “made with LAPHUD” mark at the bottom, on its dark panel. The checkbox is gone.
 
-Rappel de la 0.2.0 / Also in 0.2.0: compatible RaceChrono (CSV v3), signature en option, gestion des GoPro sans satellites, fin d'export plus robuste.
+Aussi / Also: le README et le site expliquent l'avertissement de Windows au premier lancement (l'appli n'est pas signée) / the README and site explain the Windows warning on first launch (the app isn't code-signed).
 
 ### Téléchargements / Downloads
 

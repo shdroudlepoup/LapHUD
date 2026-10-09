@@ -37,7 +37,7 @@ class ExportOptions:
     start: float | None = None          # extrait : début (s)
     duration: float | None = None       # extrait : durée (s)
     workers: int = 0                    # 0 = auto
-    signature: bool = False             # mention « made with LAPHUD »
+    signature: bool = True              # mention « made with LAPHUD »
 
 
 class Cancelled(Exception):
