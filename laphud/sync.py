@@ -135,8 +135,11 @@ def best_match(clip, logs):
         cand = sorted(logs, key=lambda L: (gap(L), -overlap(L)))
         if gap(cand[0]) < 600:
             return cand[0], synchronize(clip, cand[0])
+        return None, None          # l'heure GPS est sûre : aucun CSV n'a été enregistré à ce moment-là
+    # pas d'heure GPS : on cherche le CSV dont les G collent à l'accéléromètre,
+    # et on n'accepte qu'une ressemblance franche (sinon c'est une autre session)
     results = [(L, synchronize(clip, L)) for L in logs]
-    results = [(L, r) for L, r in results if r.method == "imu"]
+    results = [(L, r) for L, r in results if r.method == "imu" and r.confidence >= 0.3]
     if not results:
         return None, None
     return max(results, key=lambda x: x[1].confidence)
