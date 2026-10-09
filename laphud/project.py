@@ -1,6 +1,6 @@
 """
 Analyse d'un lot : on donne des fichiers ou des dossiers, LapHUD trouve les
-vidéos GoPro et les CSV RaceBox, associe chaque vidéo à sa session et la synchronise.
+vidéos GoPro et les CSV RaceBox ou RaceChrono, associe chaque vidéo à sa session et la synchronise.
 """
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import json
 import os
 from dataclasses import dataclass
 
-from . import gopro, racebox, sync
+from . import gopro, racebox, racechrono, sync
 from .session import Session
 from .i18n import Msg
 
@@ -51,7 +51,7 @@ def scan(paths):
         if low.endswith(VIDEO_EXT) and not os.path.basename(low).startswith("._"):
             if not low.endswith((".part.mp4", "_laphud.mp4")):
                 vids.append(os.path.abspath(p))
-        elif low.endswith(".csv") and racebox.is_racebox_csv(p):
+        elif low.endswith(".csv") and (racebox.is_racebox_csv(p) or racechrono.is_racechrono_csv(p)):
             csvs.append(os.path.abspath(p))
 
     for p in paths:
@@ -72,7 +72,7 @@ def analyze(paths, log=print, progress=None, extra_csvs=()):
     logs = []
     for c in csvs:
         try:
-            logs.append(racebox.load(c))
+            logs.append(racechrono.load(c) if racechrono.is_racechrono_csv(c) else racebox.load(c))
         except (OSError, ValueError) as e:
             log(f"CSV ignoré ({os.path.basename(c)}) : {e}")
     sessions = {}
@@ -81,11 +81,15 @@ def analyze(paths, log=print, progress=None, extra_csvs=()):
         if progress:
             progress(i / max(len(vids), 1), os.path.basename(v))
         j = Job(v)
-        jobs.append(j)
         try:
             j.clip = gopro.read_clip(v)
         except (OSError, ValueError) as e:
-            j.status, j.message, j.include = "error", (e.args[0] if e.args else str(e)), False
+            reason = e.args[0] if e.args else str(e)
+            if isinstance(reason, Msg) and reason.key == "err_no_gpmf":
+                continue           # pas une vidéo GoPro (ex. vidéo RaceChrono) : on l'ignore
+            j.status, j.message, j.include = "error", reason, False
+        jobs.append(j)
+        if j.status == "error":
             continue
         L, res = sync.best_match(j.clip, logs)
         if L is None:

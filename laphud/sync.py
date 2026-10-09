@@ -105,7 +105,7 @@ def synchronize(clip, log, search=8.0):
         if den:
             frac = 0.5 * (y0 - y2) / den
     offset = float(offs[k] + frac / FS)
-    conf = float(peak[k])
+    conf = min(1.0, float(peak[k]))
     far = ok & (np.abs(offs - offs[k]) > 1.5)
     if far.any() and sc[far].max() > 0.8 * sc[k]:
         conf *= 0.5
@@ -137,7 +137,18 @@ def best_match(clip, logs):
         cand = sorted(logs, key=lambda L: (gap(L), -overlap(L)))
         if gap(cand[0]) < 600:
             return cand[0], synchronize(clip, cand[0])
-        return None, None          # l'heure GPS est sûre : aucun CSV n'a été enregistré à ce moment-là
+        if clip.anchor_fixed:
+            return None, None      # heure GPS sûre : aucun CSV n'a été enregistré à ce moment-là
+        # heure GPS non confirmée par un fix : elle peut être fausse, on vérifie par les
+        # accéléromètres (en ignorant l'heure), avec une exigence de ressemblance plus forte
+        saved = clip.gps_anchor
+        clip.gps_anchor = None
+        try:
+            res = [(L, synchronize(clip, L)) for L in logs]
+        finally:
+            clip.gps_anchor = saved
+        res = [(L, r) for L, r in res if r.method == "imu" and r.confidence >= 0.5]
+        return max(res, key=lambda x: x[1].confidence) if res else (None, None)
     # pas d'heure GPS : on cherche le CSV dont les G collent à l'accéléromètre,
     # et on n'accepte qu'une ressemblance franche (sinon c'est une autre session)
     results = [(L, synchronize(clip, L)) for L in logs]

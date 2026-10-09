@@ -209,6 +209,7 @@ class GoProClip:
     gps_t: np.ndarray           # temps vidéo (s)
     gps: np.ndarray             # (n, 4) lat, lon, alt, vitesse m/s
     gps_anchor: datetime | None  # heure UTC à t_vidéo = 0, d'après GPSU (±1 s)
+    anchor_fixed: bool = False   # True si l'heure vient d'un vrai fix GPS (sinon : à confirmer)
 
     @property
     def has_imu(self):
@@ -258,27 +259,32 @@ def read_clip(path):
     accl = np.vstack(acc_v) if acc_v else np.zeros((0, 3))
     g_t = np.concatenate(gps_t) if gps_t else np.zeros(0)
     g_v = np.vstack(gps_v) if gps_v else np.zeros((0, 4))
+    anchor, fixed = _best_anchor(anchors, creation)
     return GoProClip(path, duration, vid.width, vid.height, fps, creation,
-                     accl_t, accl, g_t, g_v, _best_anchor(anchors))
+                     accl_t, accl, g_t, g_v, anchor, fixed)
 
 
-def _best_anchor(anchors):
+def _best_anchor(anchors, creation=None):
     """Heure UTC du début de la vidéo d'après les GPSU.
 
     Les ancres prises avec un fix GPS sont fiables. Sans fix, le récepteur donne souvent
     quand même la bonne heure (elle vient des satellites), mais avant cela il émet des
-    valeurs bidon (ex. 2021-03-07) : on garde le plus gros groupe d'ancres cohérentes."""
+    valeurs bidon (ex. 2021-03-07) : on garde le plus gros groupe d'ancres cohérentes,
+    et on écarte celles que l'horloge de la caméra contredit de plus d'un mois.
+    Renvoie (heure, fiable)."""
     good = [a for a, fix in anchors if fix]
     pool = good or [a for a, fix in anchors if a.year >= 2016]
+    if not good and creation is not None and creation.year >= 2019:
+        pool = [a for a in pool if abs((a - creation).total_seconds()) < 30 * 86400]
     if not pool:
-        return None
+        return None, False
     base = pool[0]
     rel = np.array([(a - base).total_seconds() for a in pool])
     best = max(range(len(rel)), key=lambda i: int((np.abs(rel - rel[i]) < 1.5).sum()))
     grp = rel[np.abs(rel - rel[best]) < 1.5]
     if not good and len(grp) < 5:
-        return None
-    return base + timedelta(seconds=float(np.median(grp)))
+        return None, False
+    return base + timedelta(seconds=float(np.median(grp))), bool(good)
 
 
 def _parse_payload(buf, pts, dur, acc_t, acc_v, gps_t, gps_v, anchors):

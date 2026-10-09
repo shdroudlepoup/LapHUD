@@ -31,6 +31,25 @@ def circle_log(n_laps=4, start_angle=-0.3, phase_noise=0.0):
                       np.zeros_like(t), -g_lat, lap, True)   # axe latéral volontairement inversé
 
 
+
+def write_racechrono_csv(path, log):
+    """Écrit un log au format d'export CSV v3 de RaceChrono (en-têtes compris)."""
+    t0 = log.t0.timestamp()
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write("This file is created using RaceChrono Pro v10.2.3 ( http://racechrono.com/ ).\n"
+                 "Format,3\nSession title,\"Test\"\n\n")
+        fh.write("timestamp,fragment_id,lap_number,elapsed_time,distance_traveled,accuracy,altitude,bearing,"
+                 "device_update_rate,fix_type,latitude,longitude,satellites,speed,combined_acc,device_update_rate,"
+                 "lateral_acc,lean_angle,longitudinal_acc,speed\n")
+        fh.write("unix time,,,s,m,m,m,deg,Hz,,deg,deg,sats,m/s,G,Hz,G,deg,G,m/s\n")
+        fh.write(",,,,,100: gps,100: gps,100: gps,100: gps,100: gps,100: gps,100: gps,100: gps,100: gps,calc,calc,calc,calc,calc,calc\n")
+        for i in range(len(log.t)):
+            lap = "" if log.lap[i] == 0 else str(log.lap[i])
+            fh.write(f"{t0 + log.t[i]:.3f},0,{lap},{log.t[i]:.3f},0,3,{log.alt[i]},0,,1.0,"
+                     f"{log.lat[i]:.8f},{log.lon[i]:.8f},12,{log.speed[i]:.3f},,20.0,{log.g_lat[i]:.3f},,"
+                     f"{log.g_lon[i]:.3f},{log.speed[i]:.3f}\n")
+
+
 class SessionTests(unittest.TestCase):
     def test_lap_times_exact(self):
         s = Session(circle_log())
@@ -92,6 +111,31 @@ class SyncTests(unittest.TestCase):
         clip.gps_anchor = None
         r = sync.synchronize(clip, log)
         self.assertAlmostEqual(r.offset, -23.4, delta=0.03)
+
+
+class ImportTests(unittest.TestCase):
+    def test_racechrono_csv(self):
+        """Un export CSV v3 de RaceChrono donne les mêmes tours qu'un RaceBox."""
+        import os
+        import tempfile
+        from laphud import racechrono
+        path = os.path.join(tempfile.mkdtemp(), "session_v3.csv")
+        write_racechrono_csv(path, circle_log())
+        self.assertTrue(racechrono.is_racechrono_csv(path))
+        s = Session(racechrono.load(path))
+        self.assertEqual(len(s.timed), 4)
+        for L in s.timed:
+            self.assertAlmostEqual(L.duration, LAP, delta=0.01)
+
+    def test_placeholder_gps_time_rejected(self):
+        """L'heure bidon de la GoPro sans satellites (2021-03-07) est écartée."""
+        from laphud.gopro import _best_anchor
+        creation = datetime(2026, 3, 22, 11, 6, tzinfo=timezone.utc)
+        fake = [(datetime(2021, 3, 7, 14, 12, tzinfo=timezone.utc), False) for _ in range(40)]
+        real = [(datetime(2026, 3, 22, 14, 12, 50, tzinfo=timezone.utc), False) for _ in range(10)]
+        anchor, fixed = _best_anchor(fake + real, creation)
+        self.assertEqual(anchor.year, 2026)
+        self.assertFalse(fixed)
 
 
 if __name__ == "__main__":

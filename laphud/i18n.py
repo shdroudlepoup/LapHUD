@@ -17,10 +17,10 @@ T = {
         # en-tête et zone de dépôt
         "tagline": "Le HUD télémétrie de tes vidéos embarquées · GoPro + RaceBox",
         "btn_files": "+  Fichiers", "btn_dir": "+  Dossier", "btn_clear": "Vider",
-        "drop_title": "Glisse ici tes vidéos GoPro et tes CSV RaceBox",
+        "drop_title": "Glisse ici tes vidéos GoPro et tes CSV RaceBox ou RaceChrono",
         "drop_sub": "ou un dossier entier : LapHUD retrouve tout seul quelle vidéo va avec quelle session\n"
                     "et les synchronise au centième grâce aux accéléromètres.",
-        "drop_hint": "Export RaceBox conseillé : format CSV, préréglage « Custom », date et heure complètes en UTC.",
+        "drop_hint": "RaceBox : export CSV « Custom », date et heure en UTC  ·  RaceChrono : Exporter → CSV (v3)",
         "lang_tip": "Langue de l'application et du HUD",
         # sessions et aperçu
         "sessions": "SESSIONS", "preview": "APERÇU",
@@ -37,7 +37,7 @@ T = {
         "card_done": "Exportée ✓", "card_running": "Export en cours…",
         "sync_excellent": "synchro auto excellente", "sync_ok": "synchro auto correcte",
         "sync_faible": "synchro incertaine, vérifie l'aperçu", "sync_approx": "synchro approximative (heure GPS)",
-        "no_match": "aucune session RaceBox ne correspond",
+        "no_match": "aucune session RaceBox ou RaceChrono ne correspond",
         # ligne de synchro
         "sync_label_auto": "Synchro auto · confiance {c} %",
         "sync_label_faible": "Synchro incertaine · vérifie avec l'aperçu",
@@ -53,7 +53,7 @@ T = {
         "export_btn": "EXPORTER", "export_btn_n": "EXPORTER  ({n})",
         "theme_broadcast": "Broadcast", "theme_glass": "Carbone", "theme_minimal": "Épuré",
         # dialogues
-        "dlg_files": "Vidéos GoPro et CSV RaceBox",
+        "dlg_files": "Vidéos GoPro et CSV RaceBox / RaceChrono",
         "dlg_filter": "Vidéos et données (*.mp4 *.MP4 *.csv);;Tous les fichiers (*)",
         "dlg_dir": "Dossier de roulage", "dlg_out": "Dossier de sortie",
         "quit_q": "Un export est en cours. Quitter quand même ?",
@@ -89,10 +89,10 @@ T = {
     "en": {
         "tagline": "Telemetry HUD for your onboard videos · GoPro + RaceBox",
         "btn_files": "+  Files", "btn_dir": "+  Folder", "btn_clear": "Clear",
-        "drop_title": "Drop your GoPro videos and RaceBox CSV files here",
+        "drop_title": "Drop your GoPro videos and RaceBox or RaceChrono CSV files here",
         "drop_sub": "or a whole folder: LapHUD works out which video goes with which session\n"
                     "and syncs them to the hundredth of a second using the accelerometers.",
-        "drop_hint": "Recommended RaceBox export: CSV format, “Custom” preset, full date and time in UTC.",
+        "drop_hint": "RaceBox: “Custom” CSV export, date and time in UTC  ·  RaceChrono: Export → CSV (v3)",
         "lang_tip": "Language of the app and the HUD",
         "sessions": "SESSIONS", "preview": "PREVIEW",
         "goto_lap": "Go to lap…", "goto_lap_tip": "Jump straight to a lap",
@@ -107,7 +107,7 @@ T = {
         "card_done": "Exported ✓", "card_running": "Exporting…",
         "sync_excellent": "automatic sync: excellent", "sync_ok": "automatic sync: good",
         "sync_faible": "uncertain sync, check the preview", "sync_approx": "approximate sync (GPS time)",
-        "no_match": "no matching RaceBox session",
+        "no_match": "no matching RaceBox or RaceChrono session",
         "sync_label_auto": "Automatic sync · {c}% confidence",
         "sync_label_faible": "Uncertain sync · check with the preview",
         "sync_label_approx": "GPS-time sync only · check with the preview",
@@ -120,7 +120,7 @@ T = {
         "next_to_videos": "Next to the videos", "cancel": "Cancel",
         "export_btn": "EXPORT", "export_btn_n": "EXPORT  ({n})",
         "theme_broadcast": "Broadcast", "theme_glass": "Carbon", "theme_minimal": "Clean",
-        "dlg_files": "GoPro videos and RaceBox CSV files",
+        "dlg_files": "GoPro videos and RaceBox / RaceChrono CSV files",
         "dlg_filter": "Videos and data (*.mp4 *.MP4 *.csv);;All files (*)",
         "dlg_dir": "Track day folder", "dlg_out": "Output folder",
         "quit_q": "An export is running. Quit anyway?",

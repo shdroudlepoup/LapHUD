@@ -40,7 +40,7 @@ Gratuit et libre (GPL-3.0), sans filigrane, sans compte, tout tourne sur ton PC.
 ## Matériel compatible
 
 - **Caméras** : GoPro HERO5 et plus récentes (télémétrie GPMF).
-- **Données** : RaceBox Mini / Mini S / Micro, export **CSV**.
+- **Données** : RaceBox Mini / Mini S / Micro (export **CSV**), ou **RaceChrono** (export **CSV v3**).
 - **Systèmes** : Windows 10/11, macOS (Apple Silicon), Linux (x86-64).
 - **Encodage** : accélération matérielle NVIDIA, AMD, Intel ou Apple (VideoToolbox), sinon le processeur.
 
@@ -48,6 +48,11 @@ Gratuit et libre (GPL-3.0), sans filigrane, sans compte, tout tourne sur ton PC.
 
 Format **CSV**, préréglage **Custom**, **Full Date/Time** en **UTC**.
 (L'heure locale marche aussi : LapHUD corrige le fuseau.)
+
+### Ou depuis RaceChrono
+
+Dans la session : **Exporter → CSV (v3)**. Les tours officiels de RaceChrono sont repris tels quels.
+Avec le GPS d'un téléphone (1 point par seconde), la vitesse et les G sont plus lissées qu'avec un RaceBox.
 
 ## Utilisation
 
