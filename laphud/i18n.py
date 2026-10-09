@@ -15,7 +15,7 @@ _lang = "fr"
 T = {
     "fr": {
         # en-tête et zone de dépôt
-        "tagline": "Le HUD télémétrie de tes vidéos embarquées · GoPro + RaceBox",
+        "tagline": "Le HUD télémétrie de tes vidéos embarquées · GoPro + RaceBox / RaceChrono",
         "btn_files": "+  Fichiers", "btn_dir": "+  Dossier", "btn_clear": "Vider",
         "drop_title": "Glisse ici tes vidéos GoPro et tes CSV RaceBox ou RaceChrono",
         "drop_sub": "ou un dossier entier : LapHUD retrouve tout seul quelle vidéo va avec quelle session\n"
@@ -47,6 +47,8 @@ T = {
         "style": "STYLE", "resolution": "RÉSOLUTION", "hud": "HUD", "sound": "SON", "out_dir": "DOSSIER DE SORTIE",
         "res_original": "Originale", "fps30": "30 i/s", "fps60": "60 i/s (plus fluide)",
         "voices": "Retirer les voix",
+        "signature": "made with LapHUD", "signature_lbl": "SIGNATURE",
+        "signature_tip": "Ajoute une petite mention « made with LAPHUD » en bas de la vidéo",
         "voices_tip": "Garde le son du moteur et de la route (modèle BS-Roformer)",
         "voices_missing": "Installe « audio-separator » pour activer cette option",
         "next_to_videos": "À côté des vidéos", "cancel": "Annuler",
@@ -87,7 +89,7 @@ T = {
         "err_csv_columns": "ce n'est pas un export CSV RaceBox (colonnes introuvables)",
     },
     "en": {
-        "tagline": "Telemetry HUD for your onboard videos · GoPro + RaceBox",
+        "tagline": "Telemetry HUD for your onboard videos · GoPro + RaceBox / RaceChrono",
         "btn_files": "+  Files", "btn_dir": "+  Folder", "btn_clear": "Clear",
         "drop_title": "Drop your GoPro videos and RaceBox or RaceChrono CSV files here",
         "drop_sub": "or a whole folder: LapHUD works out which video goes with which session\n"
@@ -115,6 +117,8 @@ T = {
         "style": "STYLE", "resolution": "RESOLUTION", "hud": "HUD", "sound": "SOUND", "out_dir": "OUTPUT FOLDER",
         "res_original": "Original", "fps30": "30 fps", "fps60": "60 fps (smoother)",
         "voices": "Remove voices",
+        "signature": "made with LapHUD", "signature_lbl": "SIGNATURE",
+        "signature_tip": "Adds a small “made with LAPHUD” mark at the bottom of the video",
         "voices_tip": "Keeps the engine and road sound (BS-Roformer model)",
         "voices_missing": "Install “audio-separator” to enable this option",
         "next_to_videos": "Next to the videos", "cancel": "Cancel",

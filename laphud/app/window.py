@@ -393,6 +393,12 @@ class MainWindow(QMainWindow):
             self.chk_voices.setToolTip(tr("voices_missing"))
         h.addLayout(labeled(tr("sound"), self.chk_voices))
 
+        self.chk_sign = QCheckBox(tr("signature"))
+        self.chk_sign.setToolTip(tr("signature_tip"))
+        self.chk_sign.setChecked(self.settings.value("signature", "false") == "true")
+        self.chk_sign.toggled.connect(self._sign_changed)
+        h.addLayout(labeled(tr("signature_lbl"), self.chk_sign))
+
         self.b_out = QPushButton()
         self.b_out.setMinimumWidth(220)
         self.b_out.clicked.connect(self._pick_out)
@@ -635,11 +641,12 @@ class MainWindow(QMainWindow):
             self._load_frame()
 
     def _renderer(self, job, w, h):
-        k = (id(job.session), w, h, self.cmb_theme.currentData(), i18n.get_lang())
+        sign = self.chk_sign.isChecked()
+        k = (id(job.session), w, h, self.cmb_theme.currentData(), i18n.get_lang(), sign)
         r = self._renderers.get(k)
         if r is None:
             r = self._renderers[k] = HudRenderer(job.session, w, h, theme=self.cmb_theme.currentData(),
-                                                 lang=i18n.get_lang())
+                                                 lang=i18n.get_lang(), signature=sign)
         return r
 
     def _draw_preview(self):
@@ -665,6 +672,10 @@ class MainWindow(QMainWindow):
         super().resizeEvent(e)
         if self._frame is not None:
             QTimer.singleShot(0, self._draw_preview)
+
+    def _sign_changed(self, on):
+        self.settings.setValue("signature", "true" if on else "false")
+        self._draw_preview()
 
     def _theme_changed(self):
         self.settings.setValue("theme", self.cmb_theme.currentData())
@@ -701,7 +712,8 @@ class MainWindow(QMainWindow):
         start = max(0.0, self._slider_time() - 1.0)
         out = os.path.join(self.tmp, f"apercu_{os.getpid()}_{int(start * 1000)}_{int(j.nudge * 1000)}.mp4")
         opts = export.ExportOptions(out_size=(1280, 720), hud_fps=30, theme=self.cmb_theme.currentData(),
-                                    lang=i18n.get_lang(), start=start, duration=10, workers=4)
+                                    lang=i18n.get_lang(), signature=self.chk_sign.isChecked(),
+                                    start=start, duration=10, workers=4)
         self._busy(True, tr("preparing_preview"))
 
         def job_fn(task):
@@ -747,6 +759,7 @@ class MainWindow(QMainWindow):
         low_priority(True)
         self._busy(True, tr("exporting"), cancellable=True)
         lang = i18n.get_lang()
+        sign = self.chk_sign.isChecked()
 
         def run(task):
             done = 0
@@ -757,7 +770,7 @@ class MainWindow(QMainWindow):
                 os.makedirs(os.path.dirname(out), exist_ok=True)
                 task.logged.emit(f"start:{self.jobs.index(j)}")
                 opts = export.ExportOptions(out_size=out_size, hud_fps=fps, theme=theme, lang=lang,
-                                            remove_voices=kill)
+                                            remove_voices=kill, signature=sign)
                 try:
                     export.export(j.video, j.clip, j.session, j.sync.offset + j.nudge, out, opts,
                                   progress=lambda f, s, k=k: task.progressed.emit(

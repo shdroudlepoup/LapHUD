@@ -37,6 +37,7 @@ class ExportOptions:
     start: float | None = None          # extrait : début (s)
     duration: float | None = None       # extrait : durée (s)
     workers: int = 0                    # 0 = auto
+    signature: bool = False             # mention « made with LAPHUD »
 
 
 class Cancelled(Exception):
@@ -64,8 +65,8 @@ def atlas_layout(panels):
 _W = {}
 
 
-def _worker_init(session, size, theme, lang, offset, start, fps):
-    r = HudRenderer(session, size[0], size[1], theme=theme, lang=lang)
+def _worker_init(session, size, theme, lang, offset, start, fps, signature=False):
+    r = HudRenderer(session, size[0], size[1], theme=theme, lang=lang, signature=signature)
     aw, ah, pos = atlas_layout(r.panels)
     _W.update(session=session, r=r, aw=aw, ah=ah, pos=pos, offset=offset, start=start, fps=fps)
 
@@ -152,7 +153,7 @@ def export(video, clip, session, offset, out, opts=None, log=print, progress=Non
         vthread.start()
 
     # --- ffmpeg
-    probe = HudRenderer(session, OW, OH, theme=opts.theme, lang=opts.lang)
+    probe = HudRenderer(session, OW, OH, theme=opts.theme, lang=opts.lang, signature=opts.signature)
     aw, ah, pos = atlas_layout(probe.panels)
     trim = (["-ss", f"{start:.3f}"] if start else []) + ["-t", f"{dur:.3f}"]
     cmd = [ff, "-y", "-hide_banner", "-v", "error", "-nostats", "-progress", "pipe:2",
@@ -204,7 +205,8 @@ def export(video, clip, session, offset, out, opts=None, log=print, progress=Non
     try:
         try:
             with ctx.Pool(workers, initializer=_worker_init,
-                          initargs=(session, (OW, OH), opts.theme, opts.lang, offset, start, fps)) as pool:
+                          initargs=(session, (OW, OH), opts.theme, opts.lang, offset, start, fps,
+                                    opts.signature)) as pool:
                 # nombre d'images en vol limité : si ffmpeg est plus lent que le rendu, les
                 # processus de rendu attendent au lieu d'empiler des images en mémoire
                 inflight = collections.deque()

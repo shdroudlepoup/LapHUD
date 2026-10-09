@@ -69,8 +69,9 @@ class Panel:
 
 
 class HudRenderer:
-    def __init__(self, session, width, height, theme="glass", lang="fr"):
+    def __init__(self, session, width, height, theme="broadcast", lang="fr", signature=False):
         self.session = session
+        self.signature = signature      # petite mention « made with LAPHUD » en bas au centre
         self.W, self.H = width, height
         self.s = height / 1080.0
         self.th = THEMES[theme] if isinstance(theme, str) else theme
@@ -94,7 +95,8 @@ class HudRenderer:
             Panel("times", W - u(M) - u(330), u(M), u(330), u(118), pad),
             Panel("map", u(M), H - u(M) - u(224), u(224), u(224), pad),
             Panel("g", W - u(M) - u(224), H - u(M) - u(254), u(224), u(254), pad),
-        ]
+        ] + ([Panel("brand", (W - u(240)) // 2, H - u(M) - u(28), u(240), u(28), pad)]
+             if self.signature else [])
 
     # ------------------------------------------------------------------ texte
     def font(self, which, size):
@@ -228,6 +230,8 @@ class HudRenderer:
         elif p.name == "g":
             self._panel_bg(c, p.w, p.h)
             self._draw_g_grid(c, p)
+        elif p.name == "brand":
+            self._draw_brand(c, p)
         img = self._static[p.name] = surf.makeImageSnapshot()
         return img
 
@@ -396,6 +400,29 @@ class HudRenderer:
         if n > 1:
             dx, dy = dx / n, dy / n
         return cx + dx * R, cy + dy * R
+
+    def _draw_brand(self, c, p):
+        """« made with LAPHUD » : discret, lisible sur n'importe quel fond."""
+        s = self.s
+        f_small = self.font("font_label", 14)
+        tf = skia.Typeface.MakeFromFile(self.th.font("font_num_heavy"))
+        f_logo = skia.Font(tf, 21 * s)
+        f_logo.setSkewX(-0.2)
+        f_logo.setEdging(skia.Font.Edging.kAntiAlias)
+        pre = "made with  "
+        w_pre = self.text_width(pre, f_small, False, 0.6)
+        w_lap, w_hud = f_logo.measureText("LAP"), f_logo.measureText("HUD")
+        x = (p.w - (w_pre + w_lap + w_hud)) / 2
+        y = p.h - 7 * s
+        shadow = skia.ImageFilters.DropShadow(0, 1.5 * s, 3 * s, 3 * s, skia.Color(0, 0, 0, 200))
+        self.text(c, pre, x, y - 1 * s, f_small, skia.Color(236, 238, 242, 200), tab=False, spacing=0.6, shadow=True)
+        x += w_pre
+        for txt, col, w in (("LAP", _c(self.th.text, 235), w_lap), ("HUD", _c(self.th.accent, 245), w_hud)):
+            c.drawString(txt, x, y, f_logo, skia.Paint(AntiAlias=True, Color=col, ImageFilter=shadow))
+            x += w
+
+    def _p_brand(self, c, p, st):
+        pass                     # tout est dans le fond fixe
 
     def _p_g(self, c, p, st):
         s, th = self.s, self.th
