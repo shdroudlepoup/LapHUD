@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 
 import numpy as np
 
+from .i18n import Msg
+
 
 @dataclass
 class RaceBoxLog:
@@ -86,7 +88,7 @@ def load(path):
     times, rows, utc_flag = [], [], True
     with open(path, encoding="utf-8-sig", newline="") as fh:
         if not _skip_to_header(fh):
-            raise ValueError("ce n'est pas un export CSV RaceBox (colonnes introuvables)")
+            raise ValueError(Msg("err_csv_columns"))
         for r in csv.DictReader(fh):
             try:
                 ts, utc = _parse_time(r["Time"])
@@ -103,7 +105,7 @@ def load(path):
             except (KeyError, ValueError):
                 continue
     if len(rows) < 10:
-        raise ValueError("CSV RaceBox vide ou illisible")
+        raise ValueError(Msg("err_csv_empty"))
     a = np.array(rows, dtype=float)
     t0 = times[0]
     t = np.array([(x - t0).total_seconds() for x in times])

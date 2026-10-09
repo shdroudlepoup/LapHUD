@@ -55,8 +55,8 @@ def find_tool(name):
 def ffmpeg():
     p = find_tool("ffmpeg")
     if not p:
-        raise RuntimeError("ffmpeg introuvable. Installe-le (https://ffmpeg.org) ou place ffmpeg.exe "
-                           "dans le dossier « ffmpeg » à côté de LapHUD.")
+        from .i18n import tr
+        raise RuntimeError(tr("ffmpeg_missing"))
     return p
 
 

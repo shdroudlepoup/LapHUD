@@ -25,6 +25,11 @@ def main():
     if os.path.exists(icon):
         app.setWindowIcon(QIcon(icon))
     app.setStyleSheet(QSS)
+    # langue : choix enregistré, sinon celle de l'ordinateur (LAPHUD_LANG pour forcer, ex. captures)
+    from PySide6.QtCore import QSettings
+    from .. import i18n
+    i18n.set_lang(os.environ.get("LAPHUD_LANG") or QSettings("LapHUD", "LapHUD").value("lang")
+                  or i18n.system_lang())
     w = MainWindow()
     w.show()
     if len(sys.argv) > 1:

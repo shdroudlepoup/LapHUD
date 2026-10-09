@@ -19,6 +19,8 @@ from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
+from .i18n import Msg
+
 # ---------------------------------------------------------------------------
 # MP4 : lecture minimale des boîtes nécessaires
 # ---------------------------------------------------------------------------
@@ -224,7 +226,7 @@ def read_clip(path):
         fsize = os.fstat(f.fileno()).st_size
         moov = next(((a, b) for t, a, b in _iter_boxes(f, 0, fsize) if t == b"moov"), None)
         if not moov:
-            raise ValueError("fichier MP4 illisible (pas de boîte moov)")
+            raise ValueError(Msg("err_moov"))
         creation = None
         tracks = []
         for typ, a, b in _iter_boxes(f, *moov):
@@ -240,12 +242,12 @@ def read_clip(path):
         vid = next((t for t in tracks if t.handler == b"vide"), None)
         meta = next((t for t in tracks if t.fmt == b"gpmd"), None)
         if vid is None:
-            raise ValueError("pas de piste vidéo")
+            raise ValueError(Msg("err_no_video"))
         duration = vid.duration / vid.timescale
         nfr = sum(c for c, _ in vid.stts)
         fps = nfr / duration if duration else 30.0
         if meta is None:
-            raise ValueError("pas de télémétrie GoPro (piste gpmd absente)")
+            raise ValueError(Msg("err_no_gpmf"))
 
         acc_t, acc_v, gps_t, gps_v, anchors = [], [], [], [], []
         for off, size, pts, dur in _sample_table(meta):

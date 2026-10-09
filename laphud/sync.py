@@ -13,9 +13,11 @@ Convention : temps_session = temps_vidéo - offset
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
+
+from .i18n import Msg
 
 FS = 25.0                    # Hz, grille commune
 MIN_OVERLAP_S = 60.0
@@ -27,7 +29,7 @@ class SyncResult:
     method: str              # "imu" ou "gps"
     confidence: float        # 0..1 (corrélation au pic)
     coarse: float | None     # offset d'après l'heure GPS seule
-    note: str = ""
+    note: list = field(default_factory=list)   # liste de Msg
 
     @property
     def quality(self):
@@ -61,19 +63,19 @@ def _xcorr(g, r):
 
 def synchronize(clip, log, search=8.0):
     """Offset vidéo -> session. `search` = tolérance (s) autour de la synchro GPS."""
-    coarse, note = None, ""
+    coarse, note = None, []
     if clip.gps_anchor is not None:
         coarse = (log.t0 - clip.gps_anchor).total_seconds()
         hours = 0 if log.utc else round(coarse / 3600.0)
         if hours:                      # CSV exporté en heure locale
             coarse -= hours * 3600.0
-            note = f"heure du CSV en local ({hours:+d} h) corrigée"
+            note.append(Msg("note_local_tz", h=hours))
     else:
-        note = "pas d'heure GPS dans la vidéo : recherche sur toute la durée"
+        note.append(Msg("note_no_gps_time"))
 
     if not clip.has_imu:
         return SyncResult(coarse or 0.0, "gps", 0.0, coarse,
-                          note or "pas d'accéléromètre dans la vidéo")
+                          note or [Msg("note_no_imu")])
 
     tg = np.arange(clip.accl_t[0], clip.accl_t[-1], 1.0 / FS)       # temps vidéo
     tr = np.arange(log.t[0], log.t[-1], 1.0 / FS)                    # temps session
@@ -93,7 +95,7 @@ def synchronize(clip, log, search=8.0):
         ok &= np.abs(offs - coarse) <= search
     if not ok.any():
         return SyncResult(coarse or 0.0, "gps", 0.0, coarse,
-                          "pas assez de recouvrement entre la vidéo et les données")
+                          [Msg("note_no_overlap")])
     sc = np.where(ok, score, -1.0)
     k = int(np.argmax(sc))
     frac = 0.0
@@ -107,7 +109,7 @@ def synchronize(clip, log, search=8.0):
     far = ok & (np.abs(offs - offs[k]) > 1.5)
     if far.any() and sc[far].max() > 0.8 * sc[k]:
         conf *= 0.5
-        note = (note + " ; " if note else "") + "plusieurs décalages possibles"
+        note.append(Msg("note_ambiguous"))
     return SyncResult(offset, "imu", conf, coarse, note)
 
 

@@ -22,6 +22,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from . import tools, voices
+from .i18n import tr
 from .hud.render import HudRenderer
 
 
@@ -97,6 +98,18 @@ def _render_atlas(k):
 
 
 # ---------------------------------------------------------------- export
+def _replace(src, dst, tries=60):
+    """os.replace qui patiente si un antivirus ou l'explorateur analyse le fichier tout neuf."""
+    for i in range(tries):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if i == tries - 1:
+                raise
+            time.sleep(0.5)
+
+
 def export(video, clip, session, offset, out, opts=None, log=print, progress=None, cancel=None):
     """
     video   : chemin du MP4 GoPro
@@ -189,62 +202,69 @@ def export(video, clip, session, offset, out, opts=None, log=print, progress=Non
     t0 = time.time()
     ok = False
     try:
-        with ctx.Pool(workers, initializer=_worker_init,
-                      initargs=(session, (OW, OH), opts.theme, opts.lang, offset, start, fps)) as pool:
-            # nombre d'images en vol limité : si ffmpeg est plus lent que le rendu, les
-            # processus de rendu attendent au lieu d'empiler des images en mémoire
-            inflight = collections.deque()
-            nxt = 0
-            for k in range(nfr):
-                while nxt < nfr and len(inflight) < workers * 3:
-                    inflight.append(pool.apply_async(_render_atlas, (nxt,)))
-                    nxt += 1
-                buf = inflight.popleft().get()
-                proc.stdin.write(buf if buf is not None else empty)
-                if k % 15 == 0:
-                    check()
-                    el = time.time() - t0
-                    rate = (k + 1) / el if el > 0 else 0
-                    eta = (nfr - k) / rate if rate else 0
-                    prog(k / max(nfr, 1), f"{k / max(nfr, 1) * 100:4.1f} % · {rate / fps:.2f}× temps réel · "
-                                          f"reste {int(eta // 60)} min {int(eta % 60):02d} s")
-        proc.stdin.close()
+        try:
+            with ctx.Pool(workers, initializer=_worker_init,
+                          initargs=(session, (OW, OH), opts.theme, opts.lang, offset, start, fps)) as pool:
+                # nombre d'images en vol limité : si ffmpeg est plus lent que le rendu, les
+                # processus de rendu attendent au lieu d'empiler des images en mémoire
+                inflight = collections.deque()
+                nxt = 0
+                for k in range(nfr):
+                    while nxt < nfr and len(inflight) < workers * 3:
+                        inflight.append(pool.apply_async(_render_atlas, (nxt,)))
+                        nxt += 1
+                    buf = inflight.popleft().get()
+                    proc.stdin.write(buf if buf is not None else empty)
+                    if k % 15 == 0:
+                        check()
+                        el = time.time() - t0
+                        rate = (k + 1) / el if el > 0 else 0
+                        eta = (nfr - k) / rate if rate else 0
+                        prog(k / max(nfr, 1), tr("prog", pct=k / max(nfr, 1) * 100, rate=rate / fps,
+                                                 m=int(eta // 60), s=int(eta % 60)))
+            proc.stdin.close()
+        except (BrokenPipeError, OSError) as e:      # ffmpeg s'est arrêté pendant l'envoi des images
+            proc.kill()
+            th.join(timeout=5)
+            raise RuntimeError(tr("err_ffmpeg_stopped", e=" | ".join(errlines[-3:]) or str(e)))
         proc.wait()
         th.join(timeout=5)
         if proc.returncode != 0:
-            raise RuntimeError("ffmpeg a échoué : " + " | ".join(errlines[-3:]))
+            raise RuntimeError(tr("err_ffmpeg", e=" | ".join(errlines[-3:])))
         got = tools.media_duration(part) or 0
         if got < dur - 2.0:
-            raise RuntimeError(f"vidéo incomplète ({got:.0f} s sur {dur:.0f} s)")
+            raise RuntimeError(tr("err_incomplete", got=got, dur=dur))
         if vthread is not None:
             if vthread.is_alive():
-                prog(1.0, "Suppression des voix (fin)…")
+                prog(1.0, tr("voices_finishing"))
             while vthread.is_alive():
                 vthread.join(timeout=0.5)
                 check()
             audio = voice.get("wav")
             if audio:
-                prog(1.0, "Pose du son sans voix…")
+                prog(1.0, tr("voices_mux"))
                 mixed = os.path.splitext(out)[0] + ".mix.part.mp4"
                 atrim = (["-ss", f"{start:.3f}"] if start else []) + ["-t", f"{dur:.3f}"]
                 r = tools.run([ff, "-y", "-v", "error", "-i", part, *atrim, "-i", audio,
                                "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
                                "-c:a", "aac", "-b:a", "256k", "-shortest", "-movflags", "+faststart", mixed])
                 if r.returncode == 0 and (tools.media_duration(mixed) or 0) >= dur - 2.0:
-                    os.replace(mixed, part)
+                    _replace(mixed, part)
                 else:
                     log("Pose du son sans voix impossible : son d'origine conservé.")
                     try:
                         os.remove(mixed)
                     except OSError:
                         pass
-        os.replace(part, out)
+        try:
+            _replace(part, out)
+        except OSError:
+            ok = True              # la vidéo est terminée : surtout ne pas l'effacer
+            raise RuntimeError(tr("err_rename", path=part))
         ok = True
-        prog(1.0, f"Terminé en {int((time.time() - t0) // 60)} min {int((time.time() - t0) % 60):02d} s")
+        el = time.time() - t0
+        prog(1.0, tr("done_in", m=int(el // 60), s=int(el % 60)))
         return out
-    except (BrokenPipeError, OSError) as e:
-        proc.kill()
-        raise RuntimeError("ffmpeg s'est arrêté : " + (" | ".join(errlines[-3:]) or str(e)))
     finally:
         if not ok:
             try:

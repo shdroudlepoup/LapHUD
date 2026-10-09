@@ -7,22 +7,22 @@ import tempfile
 import numpy as np
 import skia
 from PySide6.QtCore import Qt, QTimer, QUrl, QSize, QSettings
-from PySide6.QtGui import QImage, QPixmap, QPainter, QColor
+from PySide6.QtGui import QImage, QPixmap, QPainter
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtMultimediaWidgets import QVideoWidget
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QFrame, QLabel, QPushButton, QComboBox, QCheckBox, QSlider,
-    QProgressBar, QListWidget, QListWidgetItem, QHBoxLayout, QVBoxLayout, QGridLayout,
-    QFileDialog, QStackedWidget, QSizePolicy, QMessageBox, QPlainTextEdit,
+    QProgressBar, QListWidget, QListWidgetItem, QHBoxLayout, QVBoxLayout,
+    QFileDialog, QStackedWidget, QSizePolicy, QMessageBox,
 )
 
-from .. import tools, voices, export, project
+from .. import tools, voices, export, project, i18n
+from ..i18n import tr
 from ..hud.render import HudRenderer, fmt_time
-from ..hud.theme import THEMES
 from . import style
 from .workers import Task, keep_awake, low_priority
 
-RESOLUTIONS = [("Originale", None), ("4K", (3840, 2160)), ("1440p", (2560, 1440)), ("1080p", (1920, 1080))]
+RESOLUTIONS = [("res_original", None), ("4K", (3840, 2160)), ("1440p", (2560, 1440)), ("1080p", (1920, 1080))]
 THEME_KEYS = ["broadcast", "glass", "minimal"]
 OUT_SUFFIX = "_LapHUD.mp4"
 
@@ -98,14 +98,15 @@ class JobCard(QFrame):
             bits.append(_fmt_dur(j.clip.duration))
         if j.session:
             n = len(j.session.timed)
-            bits.append(f"{n} tour{'s' if n > 1 else ''}")
+            bits.append(tr("laps_1") if n == 1 else tr("laps_n", n=n))
             if n:
-                bits.append("meilleur " + fmt_time(min(L.duration for L in j.session.timed)))
+                bits.append(tr("card_best", t=fmt_time(min(L.duration for L in j.session.timed))))
         self.sub.setText("  ·  ".join(bits) or "—")
         col = {"ready": style.OK, "error": style.BAD, "done": style.PURPLE, "running": style.ACCENT}.get(j.status, style.DIM)
         if j.status == "ready" and j.sync and j.sync.quality in ("faible", "approx"):
             col = style.WARN
-        msg = text or {"done": "Exportée ✓", "running": "Export en cours…"}.get(j.status, j.message)
+        msg = text or {"done": tr("card_done"), "running": tr("card_running")}.get(j.status) \
+            or i18n.text(j.message)
         self.dot.set_color(col)
         self.state.setText(f'<span style="color:{style.DIM}">{msg}</span>')
         self.chk.setEnabled(j.ready and j.status not in ("done", "running"))
@@ -154,21 +155,23 @@ class MainWindow(QMainWindow):
         head = QHBoxLayout()
         logo = QLabel(f'<span style="color:{style.TEXT}">LAP</span><span style="color:{style.ACCENT}">HUD</span>')
         logo.setObjectName("logo")
-        tag = QLabel("Le HUD télémétrie de tes vidéos embarquées · GoPro + RaceBox")
+        tag = QLabel(tr("tagline"))
         tag.setObjectName("tagline")
         head.addWidget(logo)
         head.addSpacing(14)
         head.addWidget(tag, 0, Qt.AlignBottom)
         head.addStretch(1)
-        b_files = QPushButton("+  Fichiers")
-        b_dir = QPushButton("+  Dossier")
-        self.b_clear = QPushButton("Vider")
+        b_files = QPushButton(tr("btn_files"))
+        b_dir = QPushButton(tr("btn_dir"))
+        self.b_clear = QPushButton(tr("btn_clear"))
         self.b_clear.setObjectName("ghost")
         b_files.clicked.connect(self._pick_files)
         b_dir.clicked.connect(self._pick_dir)
         self.b_clear.clicked.connect(self._clear)
         for b in (self.b_clear, b_files, b_dir):
             head.addWidget(b)
+        head.addSpacing(10)
+        head.addWidget(self._build_lang())
         v.addLayout(head)
 
         # zone centrale
@@ -180,13 +183,12 @@ class MainWindow(QMainWindow):
         self.drop.setObjectName("drop")
         dl = QVBoxLayout(self.drop)
         dl.addStretch(1)
-        t1 = QLabel("Glisse ici tes vidéos GoPro et tes CSV RaceBox")
+        t1 = QLabel(tr("drop_title"))
         t1.setStyleSheet("font-size: 18pt; font-weight: 700;")
-        t2 = QLabel("ou un dossier entier — LapHUD retrouve tout seul quelle vidéo va avec quelle session\n"
-                    "et les synchronise au centième grâce aux accéléromètres.")
+        t2 = QLabel(tr("drop_sub"))
         t2.setObjectName("dim")
         t2.setAlignment(Qt.AlignCenter)
-        t3 = QLabel("Export RaceBox conseillé : format CSV, préréglage « Custom », date et heure complètes en UTC.")
+        t3 = QLabel(tr("drop_hint"))
         t3.setObjectName("dim")
         t3.setStyleSheet("font-size: 9pt;")
         for w in (t1, t2, t3):
@@ -202,7 +204,7 @@ class MainWindow(QMainWindow):
         h.setSpacing(16)
         left = QVBoxLayout()
         left.setSpacing(8)
-        lab = QLabel("SESSIONS")
+        lab = QLabel(tr("sessions"))
         lab.setObjectName("section")
         left.addWidget(lab)
         self.list = QListWidget()
@@ -219,6 +221,53 @@ class MainWindow(QMainWindow):
         # barre du bas
         v.addWidget(self._build_bottom())
 
+    def _build_lang(self):
+        """Sélecteur FR | EN : change la langue de l'interface et du HUD, en direct."""
+        box = QFrame()
+        box.setObjectName("lang")
+        box.setToolTip(tr("lang_tip"))
+        lay = QHBoxLayout(box)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+        self.lang_btns = {}
+        for code in i18n.LANGS:
+            b = QPushButton(code.upper())
+            b.setObjectName("langbtn")
+            b.setCheckable(True)
+            b.setChecked(code == i18n.get_lang())
+            b.clicked.connect(lambda _=False, c=code: self._set_lang(c))
+            lay.addWidget(b)
+            self.lang_btns[code] = b
+        return box
+
+    def _set_lang(self, code):
+        for c, b in self.lang_btns.items():
+            b.setChecked(c == (code if not self._is_busy else i18n.get_lang()))
+        if self._is_busy or code == i18n.get_lang():
+            return
+        i18n.set_lang(code)
+        self.settings.setValue("lang", code)
+        self._rebuild()
+
+    def _rebuild(self):
+        """Reconstruit la fenêtre dans la nouvelle langue en gardant les vidéos chargées."""
+        row = self.list.currentRow()
+        slider = self.slider.value()
+        self._stop_player()
+        self._build()
+        if self.jobs:
+            self._populate()
+            self._set_empty(False)
+            ok = sum(j.ready for j in self.jobs)
+            self.lbl_status.setText(tr("ready_count", ok=ok))
+            if row >= 0:
+                self.list.setCurrentRow(row)
+                self.slider.setValue(slider)
+                self._frame = None
+                self._load_frame()
+        else:
+            self._set_empty(True)
+
     def _build_preview(self):
         panel = QFrame()
         panel.setObjectName("panel")
@@ -226,7 +275,7 @@ class MainWindow(QMainWindow):
         g.setContentsMargins(14, 12, 14, 14)
         g.setSpacing(10)
         top = QHBoxLayout()
-        lab = QLabel("APERÇU")
+        lab = QLabel(tr("preview"))
         lab.setObjectName("section")
         self.lbl_title = QLabel("")
         self.lbl_title.setObjectName("dim")
@@ -234,7 +283,7 @@ class MainWindow(QMainWindow):
         top.addSpacing(10)
         top.addWidget(self.lbl_title, 1)
         self.cmb_lap = QComboBox()
-        self.cmb_lap.setToolTip("Aller directement à un tour")
+        self.cmb_lap.setToolTip(tr("goto_lap_tip"))
         self.cmb_lap.activated.connect(self._goto_lap)
         top.addWidget(self.cmb_lap)
         g.addLayout(top)
@@ -274,24 +323,24 @@ class MainWindow(QMainWindow):
         sync.addWidget(self.sync_dot, 0, Qt.AlignVCenter)
         sync.addSpacing(4)
         sync.addWidget(self.lbl_sync, 1)
-        hint = QLabel("Décaler le HUD")
+        hint = QLabel(tr("nudge_label"))
         hint.setObjectName("dim")
-        hint.setToolTip("Si le HUD est en avance ou en retard sur l'image")
+        hint.setToolTip(tr("nudge_hint"))
         sync.addWidget(hint)
         for d in (-0.1, -0.02, 0.02, 0.1):
             b = QPushButton(f"{d:+.2f}".replace("-", "−"))
             b.setObjectName("nudge")
-            b.setToolTip("Décale le HUD de %+.2f s" % d)
+            b.setToolTip(tr("nudge_tip", d=f"{d:+.2f}"))
             b.clicked.connect(lambda _=False, d=d: self._nudge(d))
             sync.addWidget(b)
-        self.b_reset = QPushButton("Auto")
+        self.b_reset = QPushButton(tr("auto"))
         self.b_reset.setObjectName("nudge")
-        self.b_reset.setToolTip("Revenir à la synchro automatique")
+        self.b_reset.setToolTip(tr("auto_tip"))
         self.b_reset.clicked.connect(lambda: self._nudge(None))
         sync.addWidget(self.b_reset)
         sync.addSpacing(10)
-        self.b_play = QPushButton("▶  Aperçu 10 s")
-        self.b_play.setToolTip("Fabrique un extrait de 10 s avec le HUD à partir de la position actuelle")
+        self.b_play = QPushButton(tr("preview_btn"))
+        self.b_play.setToolTip(tr("preview_tip"))
         self.b_play.clicked.connect(self._preview_clip)
         sync.addWidget(self.b_play)
         g.addLayout(sync)
@@ -318,38 +367,38 @@ class MainWindow(QMainWindow):
 
         self.cmb_theme = QComboBox()
         for k in THEME_KEYS:
-            self.cmb_theme.addItem(THEMES[k].name, k)
+            self.cmb_theme.addItem(tr("theme_" + k), k)
         self.cmb_theme.setCurrentIndex(max(0, THEME_KEYS.index(self.settings.value("theme", "broadcast"))))
         self.cmb_theme.currentIndexChanged.connect(self._theme_changed)
-        h.addLayout(labeled("STYLE", self.cmb_theme))
+        h.addLayout(labeled(tr("style"), self.cmb_theme))
 
         self.cmb_res = QComboBox()
         for name, _ in RESOLUTIONS:
-            self.cmb_res.addItem(name)
+            self.cmb_res.addItem(tr(name) if name.startswith("res_") else name)
         self.cmb_res.setCurrentIndex(int(self.settings.value("res", 0)))
-        h.addLayout(labeled("RÉSOLUTION", self.cmb_res))
+        h.addLayout(labeled(tr("resolution"), self.cmb_res))
 
         self.cmb_fps = QComboBox()
-        self.cmb_fps.addItem("30 i/s", 30.0)
-        self.cmb_fps.addItem("60 i/s (plus fluide)", 60.0)
+        self.cmb_fps.addItem(tr("fps30"), 30.0)
+        self.cmb_fps.addItem(tr("fps60"), 60.0)
         self.cmb_fps.setCurrentIndex(int(self.settings.value("fps", 0)))
-        h.addLayout(labeled("HUD", self.cmb_fps))
+        h.addLayout(labeled(tr("hud"), self.cmb_fps))
 
-        self.chk_voices = QCheckBox("Retirer les voix")
+        self.chk_voices = QCheckBox(tr("voices"))
         if voices.available():
             self.chk_voices.setChecked(self.settings.value("voices", "true") == "true")
-            self.chk_voices.setToolTip("Garde le son du moteur et de la route (modèle BS-Roformer)")
+            self.chk_voices.setToolTip(tr("voices_tip"))
         else:
             self.chk_voices.setEnabled(False)
-            self.chk_voices.setToolTip("Installe « audio-separator » pour activer cette option")
-        h.addLayout(labeled("SON", self.chk_voices))
+            self.chk_voices.setToolTip(tr("voices_missing"))
+        h.addLayout(labeled(tr("sound"), self.chk_voices))
 
         self.b_out = QPushButton()
         self.b_out.setMinimumWidth(220)
         self.b_out.clicked.connect(self._pick_out)
         self.out_dir = self.settings.value("out_dir", "") or ""
         self._update_out()
-        h.addLayout(labeled("DOSSIER DE SORTIE", self.b_out))
+        h.addLayout(labeled(tr("out_dir"), self.b_out))
 
         h.addStretch(1)
         st = QVBoxLayout()
@@ -363,11 +412,11 @@ class MainWindow(QMainWindow):
         st.addWidget(self.lbl_status)
         st.addWidget(self.pbar)
         h.addLayout(st)
-        self.b_cancel = QPushButton("Annuler")
+        self.b_cancel = QPushButton(tr("cancel"))
         self.b_cancel.clicked.connect(self._cancel)
         self.b_cancel.hide()
         h.addWidget(self.b_cancel)
-        self.b_export = QPushButton("EXPORTER")
+        self.b_export = QPushButton(tr("export_btn"))
         self.b_export.setObjectName("primary")
         self.b_export.clicked.connect(self._export)
         h.addWidget(self.b_export)
@@ -389,20 +438,20 @@ class MainWindow(QMainWindow):
         self._add_paths([u.toLocalFile() for u in e.mimeData().urls() if u.isLocalFile()])
 
     def _pick_files(self):
-        files, _ = QFileDialog.getOpenFileNames(self, "Vidéos GoPro et CSV RaceBox", self.settings.value("last_dir", ""),
-                                                "Vidéos et données (*.mp4 *.MP4 *.csv);;Tous les fichiers (*)")
+        files, _ = QFileDialog.getOpenFileNames(self, tr("dlg_files"), self.settings.value("last_dir", ""),
+                                                tr("dlg_filter"))
         if files:
             self.settings.setValue("last_dir", os.path.dirname(files[0]))
             self._add_paths(files)
 
     def _pick_dir(self):
-        d = QFileDialog.getExistingDirectory(self, "Dossier de roulage", self.settings.value("last_dir", ""))
+        d = QFileDialog.getExistingDirectory(self, tr("dlg_dir"), self.settings.value("last_dir", ""))
         if d:
             self.settings.setValue("last_dir", d)
             self._add_paths([d])
 
     def _pick_out(self):
-        d = QFileDialog.getExistingDirectory(self, "Dossier de sortie", self.out_dir or "")
+        d = QFileDialog.getExistingDirectory(self, tr("dlg_out"), self.out_dir or "")
         if d:
             self.out_dir = d
             self.settings.setValue("out_dir", d)
@@ -410,7 +459,7 @@ class MainWindow(QMainWindow):
             self._mark_done()
 
     def _update_out(self):
-        txt = self.out_dir or "À côté des vidéos"
+        txt = self.out_dir or tr("next_to_videos")
         if len(txt) > 34:
             txt = "…" + txt[-33:]
         self.b_out.setText(txt)
@@ -441,9 +490,9 @@ class MainWindow(QMainWindow):
         if not new:
             return
         self.paths += new
-        self._busy(True, "Analyse des fichiers…")
+        self._busy(True, tr("analyzing"))
         t = Task(lambda task: project.analyze(self.paths, progress=lambda f, s: task.progressed.emit(f, s)))
-        t.progressed.connect(lambda f, s: self._progress(f, f"Analyse · {s}"))
+        t.progressed.connect(lambda f, s: self._progress(f, tr("analyzing_file", name=s)))
         t.succeeded.connect(self._analyzed)
         t.failed.connect(lambda m: (self._busy(False), QMessageBox.warning(self, "LapHUD", m)))
         self.task = t
@@ -458,6 +507,15 @@ class MainWindow(QMainWindow):
                 j.nudge, j.include = old.nudge, old.include
         self.jobs = jobs
         self._mark_done()
+        self._populate()
+        first = next((i for i, j in enumerate(jobs) if j.ready), 0 if jobs else -1)
+        if first >= 0:
+            self.list.setCurrentRow(first)
+        self._update_export_btn()
+
+    def _populate(self):
+        """(Re)crée les cartes des sessions à partir de self.jobs."""
+        jobs = self.jobs
         self.list.clear()
         self.cards = []
         for j in jobs:
@@ -470,11 +528,7 @@ class MainWindow(QMainWindow):
         self._set_empty(not jobs)
         ok = sum(j.ready for j in jobs)
         err = [j for j in jobs if j.status == "error"]
-        self.lbl_status.setText(f"{ok} vidéo(s) prête(s)" + (f" · {len(err)} ignorée(s)" if err else ""))
-        first = next((i for i, j in enumerate(jobs) if j.ready), 0 if jobs else -1)
-        if first >= 0:
-            self.list.setCurrentRow(first)
-        self._update_export_btn()
+        self.lbl_status.setText(tr("ready_count", ok=ok) + (tr("ignored", n=len(err)) if err else ""))
 
     def _mark_done(self):
         for j in self.jobs:
@@ -494,7 +548,7 @@ class MainWindow(QMainWindow):
         n = sum(1 for j in self.jobs if j.include and j.ready and j.status != "done")
         running = self._is_busy
         self.b_export.setEnabled(n > 0 and not running)
-        self.b_export.setText(f"EXPORTER  ({n})" if n else "EXPORTER")
+        self.b_export.setText(tr("export_btn_n", n=n) if n else tr("export_btn"))
 
     # ------------------------------------------------------------------ aperçu
     def _select(self, row):
@@ -508,9 +562,9 @@ class MainWindow(QMainWindow):
         self.lbl_title.setText(j.name + (f"  ←  {os.path.basename(j.log.path)}" if j.log else ""))
         self.cmb_lap.clear()
         if j.session:
-            self.cmb_lap.addItem("Aller au tour…", None)
+            self.cmb_lap.addItem(tr("goto_lap"), None)
             for L in j.session.timed:
-                self.cmb_lap.addItem(f"Tour {L.number}  ·  {fmt_time(L.duration)}", L.t_start)
+                self.cmb_lap.addItem(tr("lap_item", n=L.number, time=fmt_time(L.duration)), L.t_start)
         self._update_sync_label()
         # position de départ : début du meilleur tour + 5 s (ou milieu de la vidéo)
         t = j.clip.duration / 2 if j.clip else 0
@@ -564,7 +618,7 @@ class MainWindow(QMainWindow):
         w = 1280
         t_task = Task(lambda task: (key, grab_frame(j.video, t, w)))
         t_task.succeeded.connect(self._frame_ready)
-        t_task.failed.connect(lambda m: self.lbl_status.setText("Aperçu impossible : " + m))
+        t_task.failed.connect(lambda m: self.lbl_status.setText(tr("preview_failed", err=m)))
         t_task.finished.connect(self._frame_task_finished)
         self.preview_task = t_task
         t_task.start()
@@ -581,10 +635,11 @@ class MainWindow(QMainWindow):
             self._load_frame()
 
     def _renderer(self, job, w, h):
-        k = (id(job.session), w, h, self.cmb_theme.currentData())
+        k = (id(job.session), w, h, self.cmb_theme.currentData(), i18n.get_lang())
         r = self._renderers.get(k)
         if r is None:
-            r = self._renderers[k] = HudRenderer(job.session, w, h, theme=self.cmb_theme.currentData())
+            r = self._renderers[k] = HudRenderer(job.session, w, h, theme=self.cmb_theme.currentData(),
+                                                 lang=i18n.get_lang())
         return r
 
     def _draw_preview(self):
@@ -622,11 +677,10 @@ class MainWindow(QMainWindow):
             return
         q = j.sync.quality
         col = {"excellent": style.OK, "ok": style.OK, "faible": style.WARN, "approx": style.WARN}[q]
-        txt = {"excellent": f"Synchro auto · confiance {j.sync.confidence * 100:.0f} %",
-               "ok": f"Synchro auto · confiance {j.sync.confidence * 100:.0f} %",
-               "faible": "Synchro incertaine · vérifie avec l'aperçu",
-               "approx": "Synchro par l'heure GPS seulement · vérifie avec l'aperçu"}[q]
-        man = f'  <span style="color:{style.TEXT}">· réglage manuel {j.nudge:+.2f} s</span>' if j.nudge else ""
+        conf = f"{j.sync.confidence * 100:.0f}"
+        txt = {"excellent": tr("sync_label_auto", c=conf), "ok": tr("sync_label_auto", c=conf),
+               "faible": tr("sync_label_faible"), "approx": tr("sync_label_approx")}[q]
+        man = f'  <span style="color:{style.TEXT}">{tr("manual", d=f"{j.nudge:+.2f}")}</span>' if j.nudge else ""
         self.sync_dot.set_color(col)
         self.lbl_sync.setText(f'<span style="color:{style.DIM}">{txt}</span>{man}')
 
@@ -647,12 +701,12 @@ class MainWindow(QMainWindow):
         start = max(0.0, self._slider_time() - 1.0)
         out = os.path.join(self.tmp, f"apercu_{os.getpid()}_{int(start * 1000)}_{int(j.nudge * 1000)}.mp4")
         opts = export.ExportOptions(out_size=(1280, 720), hud_fps=30, theme=self.cmb_theme.currentData(),
-                                    start=start, duration=10, workers=4)
-        self._busy(True, "Préparation de l'aperçu…")
+                                    lang=i18n.get_lang(), start=start, duration=10, workers=4)
+        self._busy(True, tr("preparing_preview"))
 
         def job_fn(task):
             return export.export(j.video, j.clip, j.session, j.sync.offset + j.nudge, out, opts,
-                                 progress=lambda f, s: task.progressed.emit(f, "Aperçu · " + s),
+                                 progress=lambda f, s: task.progressed.emit(f, tr("preview_prefix", s=s)),
                                  cancel=lambda: task.cancelled)
         t = Task(job_fn)
         t.progressed.connect(self._progress)
@@ -691,7 +745,8 @@ class MainWindow(QMainWindow):
         self._stop_player()
         keep_awake(True)
         low_priority(True)
-        self._busy(True, "Export…", cancellable=True)
+        self._busy(True, tr("exporting"), cancellable=True)
+        lang = i18n.get_lang()
 
         def run(task):
             done = 0
@@ -701,11 +756,12 @@ class MainWindow(QMainWindow):
                 out = self._out_path(j)
                 os.makedirs(os.path.dirname(out), exist_ok=True)
                 task.logged.emit(f"start:{self.jobs.index(j)}")
-                opts = export.ExportOptions(out_size=out_size, hud_fps=fps, theme=theme, remove_voices=kill)
+                opts = export.ExportOptions(out_size=out_size, hud_fps=fps, theme=theme, lang=lang,
+                                            remove_voices=kill)
                 try:
                     export.export(j.video, j.clip, j.session, j.sync.offset + j.nudge, out, opts,
                                   progress=lambda f, s, k=k: task.progressed.emit(
-                                      f, f"Vidéo {k}/{len(todo)} · {s}"),
+                                      f, tr("video_k", k=k, n=len(todo), s=s)),
                                   cancel=lambda: task.cancelled)
                     j.output = out
                     task.logged.emit(f"done:{self.jobs.index(j)}")
@@ -737,7 +793,7 @@ class MainWindow(QMainWindow):
         elif kind == "cancel":
             j.status = "ready"
         elif kind == "error":
-            j.status, j.message = "ready", "Échec de l'export : " + (rest[0] if rest else "?")
+            j.status, j.message = "ready", tr("export_failed", err=rest[0] if rest else "?")
         card.refresh()
 
     def _exported(self, res):
@@ -745,16 +801,16 @@ class MainWindow(QMainWindow):
         keep_awake(False)
         low_priority(False)
         self._busy(False)
-        self.lbl_status.setText(f"Terminé : {done}/{total} vidéo(s) exportée(s)")
+        self.lbl_status.setText(tr("finished", done=done, total=total))
         self._update_export_btn()
         if done:
             QMessageBox.information(self, "LapHUD",
-                                    f"{done} vidéo(s) exportée(s) dans :\n{self.out_dir or 'les dossiers des vidéos'}")
+                                    tr("exported_dlg", done=done, where=self.out_dir or tr("video_folders")))
 
     def _cancel(self):
         if self.task:
             self.task.cancel()
-            self.lbl_status.setText("Arrêt en cours…")
+            self.lbl_status.setText(tr("stopping"))
 
     # ------------------------------------------------------------------ état
     def _busy(self, on, text="", cancellable=False):
@@ -773,7 +829,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, e):
         if self.task and self.task.isRunning():
-            r = QMessageBox.question(self, "LapHUD", "Un export est en cours. Quitter quand même ?")
+            r = QMessageBox.question(self, "LapHUD", tr("quit_q"))
             if r != QMessageBox.Yes:
                 e.ignore()
                 return

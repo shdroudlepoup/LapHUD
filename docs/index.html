@@ -275,12 +275,12 @@ footer a { color: var(--text); }
 <section>
   <h2><span class="fr">L'application</span><span class="en">The app</span></h2>
   <div class="app-shot">
-    <img src="app.png" width="1500" height="900"
+    <img src="app.png" data-src-en="app_en.png" width="1500" height="900"
       alt="Fenêtre de LapHUD : liste des sessions à gauche, aperçu de la vidéo avec le HUD au centre, réglages de style, résolution et son en bas."
       data-alt-en="The LapHUD window: session list on the left, video preview with the HUD in the middle, style, resolution and sound settings at the bottom.">
     <div class="app-notes">
-      <p class="fr">Trois styles de HUD : <b>Broadcast</b> façon télé F1, <b>Carbone</b> plus discret, <b>Épuré</b> sans panneaux. L'aperçu montre le HUD sur ta vidéo avant l'export.</p>
-      <p class="en">Three HUD styles: <b>Broadcast</b>, like F1 on TV, the more discreet <b>Carbon</b>, and <b>Clean</b> with no panels. The preview shows the HUD on your footage before you export.</p>
+      <p class="fr">Trois styles de HUD : <b>Broadcast</b> façon télé F1, <b>Carbone</b> plus discret, <b>Épuré</b> sans panneaux. L'aperçu montre le HUD sur ta vidéo avant l'export. Interface et HUD en français ou en anglais.</p>
+      <p class="en">Three HUD styles: <b>Broadcast</b>, like F1 on TV, the more discreet <b>Carbon</b>, and <b>Clean</b> with no panels. The preview shows the HUD on your footage before you export. App and HUD in English or French.</p>
       <p class="fr">Un export interrompu ne laisse jamais de fichier à moitié écrit, et le PC ne se met pas en veille pendant le travail. Priorité basse : tu peux jouer pendant que ça tourne.</p>
       <p class="en">An interrupted export never leaves a half-written file, and the computer won't go to sleep mid-job. It runs at low priority, so you can keep gaming while it works.</p>
     </div>
@@ -338,6 +338,11 @@ footer a { color: var(--text); }
     var b = document.querySelectorAll(".lang button");
     for (var i = 0; i < b.length; i++) b[i].setAttribute("aria-pressed", String(b[i].getAttribute("data-set") === l));
     for (var j = 0; j < imgs.length; j++) imgs[j].alt = imgs[j].getAttribute("data-alt-" + l);
+    var sw = document.querySelectorAll("img[data-src-en]");
+    for (var k = 0; k < sw.length; k++) {
+      if (!sw[k].getAttribute("data-src-fr")) sw[k].setAttribute("data-src-fr", sw[k].getAttribute("src"));
+      sw[k].src = sw[k].getAttribute("data-src-" + l);
+    }
   }
   apply(root.getAttribute("data-lang") || "fr");
   document.querySelector(".lang").addEventListener("click", function (e) {

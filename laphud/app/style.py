@@ -40,6 +40,11 @@ QPushButton#primary {{ background: {ACCENT}; border: none; color: white; font-si
 QPushButton#primary:hover {{ background: {ACCENT_HI}; }}
 QPushButton#primary:disabled {{ background: #3a1d1f; color: #8f6f71; }}
 QPushButton#nudge {{ padding: 5px 9px; min-width: 46px; font-family: "Titillium Web"; }}
+QFrame#lang {{ border: 1px solid {LINE}; border-radius: 7px; background: {PANEL}; }}
+QPushButton#langbtn {{ background: transparent; border: none; border-radius: 6px; padding: 6px 10px;
+                      color: {DIM}; font-weight: 700; min-width: 34px; }}
+QPushButton#langbtn:hover {{ color: {TEXT}; }}
+QPushButton#langbtn:checked {{ background: {ACCENT}; color: white; }}
 QPushButton#ghost {{ background: transparent; border: none; color: {DIM}; padding: 4px 8px; }}
 QPushButton#ghost:hover {{ color: {TEXT}; }}
 

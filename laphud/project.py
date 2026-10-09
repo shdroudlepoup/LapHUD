@@ -6,10 +6,11 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from . import gopro, racebox, sync
 from .session import Session
+from .i18n import Msg
 
 VIDEO_EXT = (".mp4",)
 SKIP_DIRS = {".laphud_tmp", "$recycle.bin", "system volume information"}
@@ -25,7 +26,7 @@ class Job:
     nudge: float = 0.0                 # réglage manuel (s)
     include: bool = True
     status: str = "pending"            # pending, ready, error, running, done
-    message: str = ""
+    message: object = ""     # texte, Msg ou liste de Msg (traduit à l'affichage)
     output: str | None = None
 
     @property
@@ -84,20 +85,18 @@ def analyze(paths, log=print, progress=None, extra_csvs=()):
         try:
             j.clip = gopro.read_clip(v)
         except (OSError, ValueError) as e:
-            j.status, j.message, j.include = "error", str(e), False
+            j.status, j.message, j.include = "error", (e.args[0] if e.args else str(e)), False
             continue
         L, res = sync.best_match(j.clip, logs)
         if L is None:
-            j.status, j.message, j.include = "error", "aucune session RaceBox ne correspond", False
+            j.status, j.message, j.include = "error", Msg("no_match"), False
             continue
         j.log, j.sync = L, res
         if L.path not in sessions:
             sessions[L.path] = Session(L)
         j.session = sessions[L.path]
         j.status = "ready"
-        q = {"excellent": "synchro auto excellente", "ok": "synchro auto correcte",
-             "faible": "synchro incertaine, vérifie l'aperçu", "approx": "synchro approximative (heure GPS)"}
-        j.message = q[res.quality] + (f" — {res.note}" if res.note else "")
+        j.message = [Msg("sync_" + res.quality), *res.note]
     if progress:
         progress(1.0, "")
     return jobs

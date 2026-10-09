@@ -31,6 +31,7 @@ Gratuit et libre (GPL-3.0), sans filigrane, sans compte, tout tourne sur ton PC.
   sur la trajectoire de ton meilleur tour, pas juste la distance parcourue.
 - **HUD net en 4K**, fluide en 30 ou 60 images/s, trois styles : Broadcast (F1), Carbone, Épuré.
 - **Aperçu avant export**, avec réglage fin de la synchro si tu veux chipoter.
+- **En français ou en anglais** : l'interface et le HUD (MEILLEUR / BEST…), selon la langue de l'ordinateur ou au choix.
 - **Suppression des voix (option)** : garde le son du moteur et de la route.
 - **Robuste** : un export interrompu ne laisse jamais de fichier à moitié écrit, le PC ne se
   met pas en veille pendant l'export, et la priorité est basse pour que tu puisses jouer
