@@ -7,6 +7,8 @@ et incruste un HUD propre — vitesse, chrono, delta, meilleur tour, tracé du c
 
 Gratuit et libre (GPL-3.0), sans filigrane, sans compte, tout tourne sur ton PC.
 
+**Site : [shdroudlepoup.github.io/LapHUD](https://shdroudlepoup.github.io/LapHUD/)**
+
 ![HUD LapHUD sur une vidéo embarquée](docs/hud.jpg)
 
 ![L'application LapHUD](docs/app.png)
@@ -112,6 +114,7 @@ qui produit les mêmes données que `racebox.py`.
 
 ## Licence
 
+Copyright © 2026 shdroudlepoup.
 LapHUD est un logiciel libre sous licence **GNU GPL v3.0 ou ultérieure** — voir [LICENSE](LICENSE).
 Tu peux l'utiliser, le modifier et le partager librement ; toute version redistribuée doit
 rester libre et fournie avec son code source.

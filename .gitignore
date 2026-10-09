@@ -10,3 +10,4 @@ dist/
 *.part.mp4
 .laphud_tmp/
 _release/
+.claude/

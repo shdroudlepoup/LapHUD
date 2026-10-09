@@ -2,6 +2,7 @@ name: release
 
 # Publier une version :  git tag v0.1.0 && git push origin v0.1.0
 # GitHub compile alors LapHUD pour Windows, macOS et Linux et joint les fichiers à la release.
+# Noms de fichiers fixes : le site (docs/index.html) pointe sur releases/latest/download/<nom>.
 
 on:
   push:
@@ -43,20 +44,20 @@ jobs:
           curl -sSL -o ff.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
           unzip -q ff.zip -d ff
           python packaging/build_release.py "$(ls -d ff/*/bin)"
-          mv _release/LapHUD-*-windows.zip "_release/LapHUD-${GITHUB_REF_NAME}-windows.zip"
+          mv _release/LapHUD-*-windows.zip _release/LapHUD-windows.zip
 
       - name: macOS — LapHUD.app
         if: runner.os == 'macOS'
         run: |
           mkdir -p _release
-          ditto -c -k --keepParent dist/LapHUD.app "_release/LapHUD-${GITHUB_REF_NAME}-macos.zip"
+          ditto -c -k --keepParent dist/LapHUD.app _release/LapHUD-macos.zip
 
       - name: Linux — archive
         if: runner.os == 'Linux'
         run: |
           mkdir -p _release
           cp LICENSE packaging/LISEZMOI.txt dist/LapHUD/
-          tar czf "_release/LapHUD-${GITHUB_REF_NAME}-linux.tar.gz" -C dist LapHUD
+          tar czf _release/LapHUD-linux.tar.gz -C dist LapHUD
 
       - uses: softprops/action-gh-release@v2
         with:
