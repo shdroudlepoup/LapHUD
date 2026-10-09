@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
         self._pending_t = None
         self._is_busy = False
         self.tmp = tempfile.mkdtemp(prefix="laphud_")
+        self._clip_n = 0
         self._build()
         self._set_empty(True)
 
@@ -699,16 +700,32 @@ class MainWindow(QMainWindow):
         if not j or not j.ready or self._is_busy:
             return
         start = max(0.0, self._slider_time() - 1.0)
-        out = os.path.join(self.tmp, f"apercu_{os.getpid()}_{int(start * 1000)}_{int(j.nudge * 1000)}.mp4")
+        # Le lecteur garde l'extrait précédent ouvert : on le libère, on nettoie, et chaque
+        # extrait a un nom unique (sinon réécrire un fichier encore ouvert échoue sous Windows).
+        self._stop_player()
+        for f in os.listdir(self.tmp):
+            if f.startswith("apercu_"):
+                try:
+                    os.remove(os.path.join(self.tmp, f))
+                except OSError:
+                    pass
+        self._clip_n += 1
+        out = os.path.join(self.tmp, f"apercu_{self._clip_n}.mp4")
         opts = export.ExportOptions(out_size=(1280, 720), hud_fps=30, theme=self.cmb_theme.currentData(),
                                     lang=i18n.get_lang(), signature=True,
                                     start=start, duration=10, workers=4)
         self._busy(True, tr("preparing_preview"))
 
         def job_fn(task):
-            return export.export(j.video, j.clip, j.session, j.sync.offset + j.nudge, out, opts,
-                                 progress=lambda f, s: task.progressed.emit(f, tr("preview_prefix", s=s)),
-                                 cancel=lambda: task.cancelled)
+            try:
+                return export.export(j.video, j.clip, j.session, j.sync.offset + j.nudge, out, opts,
+                                     progress=lambda f, s: task.progressed.emit(f, tr("preview_prefix", s=s)),
+                                     cancel=lambda: task.cancelled)
+            except RuntimeError:
+                part = os.path.splitext(out)[0] + ".part.mp4"
+                if os.path.isfile(part) and not task.cancelled:
+                    return part          # extrait complet mais pas renommé : on le lit tel quel
+                raise
         t = Task(job_fn)
         t.progressed.connect(self._progress)
         t.succeeded.connect(self._play)
@@ -729,6 +746,7 @@ class MainWindow(QMainWindow):
     def _stop_player(self):
         if self.player.playbackState() != QMediaPlayer.StoppedState:
             self.player.stop()
+        self.player.setSource(QUrl())       # rend la main sur le fichier
         self.view_stack.setCurrentIndex(0)
 
     # ------------------------------------------------------------------ export

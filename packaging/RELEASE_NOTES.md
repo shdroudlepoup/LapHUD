@@ -1,10 +1,10 @@
-## LapHUD 0.2.2
+## LapHUD 0.2.3
 
-🇫🇷 **Signature toujours présente** : chaque vidéo exportée porte la petite mention « made with LAPHUD » en bas, sur son panneau sombre. La case à cocher disparaît.
+🇫🇷 **Aperçu 10 s corrigé** : en revenant à un décalage déjà essayé au même endroit, l'aperçu échouait (« impossible de la renommer ») ou montrait l'ancien extrait. Chaque aperçu est maintenant un fichier neuf, et le décalage manuel s'y voit à tous les coups.
 
-🇬🇧 **Signature always on**: every exported video carries the small “made with LAPHUD” mark at the bottom, on its dark panel. The checkbox is gone.
+🇬🇧 **10 s preview fixed**: going back to a shift you had already tried at the same spot made the preview fail (“could not rename”) or show the old clip. Every preview is now a fresh file, so the manual shift always shows.
 
-Aussi / Also: le README et le site expliquent l'avertissement de Windows au premier lancement (l'appli n'est pas signée) / the README and site explain the Windows warning on first launch (the app isn't code-signed).
+Rappel de la 0.2.2 / Also in 0.2.2: signature « made with LAPHUD » toujours présente / always-on signature.
 
 ### Téléchargements / Downloads
 

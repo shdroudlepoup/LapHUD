@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "laphud"
-version = "0.2.2"
+version = "0.2.3"
 description = "HUD de télémétrie (style F1) pour vidéos embarquées GoPro + RaceBox, synchronisé automatiquement"
 readme = "README.md"
 license = "GPL-3.0-or-later"
