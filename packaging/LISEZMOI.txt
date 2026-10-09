@@ -1,0 +1,31 @@
+LapHUD — le HUD télémétrie style F1 pour tes vidéos embarquées (GoPro + RaceBox)
+==================================================================================
+
+Utilisation
+-----------
+1. Lance LapHUD.exe (rien à installer).
+2. Glisse dans la fenêtre tes vidéos GoPro et tes CSV RaceBox (ou un dossier entier).
+   LapHUD associe chaque vidéo à sa session et la synchronise automatiquement.
+3. Vérifie l'aperçu (pastille verte = synchro sûre), choisis le style, puis EXPORTER.
+
+Export du CSV dans l'app RaceBox : format CSV, préréglage « Custom »,
+« Full Date/Time in UTC », km/h, Bike Mode décoché.
+
+Compatible : GoPro HERO5 et plus récentes, RaceBox Mini / Mini S / Micro.
+Encodage accéléré sur carte NVIDIA, AMD ou Intel (sinon par le processeur).
+
+Option « Retirer les voix » : nécessite Python et  pip install "audio-separator[gpu]"
+(carte NVIDIA conseillée). Sans cela, l'option est simplement grisée.
+
+Code source, aide et mises à jour : https://github.com/shdroudlepoup/LapHUD
+
+Licences
+--------
+LapHUD est un logiciel libre sous licence GNU GPL v3 (voir LICENSE.txt).
+FFmpeg (dossier « ffmpeg ») est distribué sous licence GPL v3 — build de gyan.dev,
+code source sur https://ffmpeg.org — voir ffmpeg\LICENSE.txt.
+Polices : SIL Open Font License. LapHUD n'est affilié ni à GoPro, ni à RaceBox.
+
+----------------------------------------------------------------------------------
+English: drop your GoPro videos and RaceBox CSV exports into LapHUD.exe — it pairs
+and syncs them automatically and burns an F1-style telemetry HUD. Free software, GPL-3.0.
